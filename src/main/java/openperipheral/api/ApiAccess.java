@@ -1,5 +1,7 @@
 package openperipheral.api;
 
+import openperipheral.Tags;
+
 /**
  * This class is used to access instancef of API interfaces (marked with {@link IApiInterface}).
  *
@@ -7,7 +9,7 @@ package openperipheral.api;
  */
 public class ApiAccess {
 
-    public static final String API_VERSION = "$OP-API-VERSION$";
+    public static final String API_VERSION = Tags.OP_API_VERSION;
 
     public interface ApiProvider {
 

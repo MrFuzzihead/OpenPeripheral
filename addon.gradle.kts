@@ -2,9 +2,12 @@
 // Accessors such as testImplementation(...) are not generated for addon scripts, so configurations are
 // addressed by name.
 
+import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.tasks.testing.Test
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JavaToolchainService
+
+import com.gtnewhorizons.retrofuturagradle.MinecraftExtension
 
 dependencies {
     // src/test uses JUnit 4 + the Mockito 1.x API (org.mockito.Matchers, InvocationOnMock#getArgumentAt)
@@ -22,4 +25,32 @@ tasks.withType(Test::class.java).configureEach {
         .launcherFor {
             languageVersion = JavaLanguageVersion.of(8)
         }
+}
+
+// Version constants referenced by openperipheral.ModInfo / openperipheral.api.ApiAccess, injected into the
+// generated openperipheral.Tags class (see generateGradleTokenClass in gradle.properties).
+// Unsubstituted placeholders end up in the @Mod annotation, which makes FML reject the OpenMods version range.
+val opApiVersion = (findProperty("opApiVersion") as String?) ?: "3.4.2"
+
+/** "0.11.0" -> "0.12.0", i.e. the exclusive upper bound used by the FML "required-after" range. */
+fun nextMinorVersion(version: String): String {
+    val parts = version.split('.')
+    val major = parts.getOrNull(0) ?: "0"
+    val minor = parts.getOrNull(1)?.toIntOrNull() ?: 0
+    return "$major.${minor + 1}.0"
+}
+
+// Resolved after evaluation, once dependencies.gradle has contributed to the "api" configuration
+afterEvaluate {
+    val openModsLibVersion = configurations.getByName("api").dependencies
+        .filterIsInstance<ModuleDependency>()
+        .firstOrNull { it.group == "com.github.GTNewHorizons" && it.name == "OpenModsLib" }
+        ?.version
+        ?: error("No OpenModsLib dependency found, cannot build the OpenMods version range")
+
+    extensions.configure<MinecraftExtension> {
+        injectedTags.put("OP_API_VERSION", opApiVersion)
+        injectedTags.put("OPENMODS_LIB_VERSION", openModsLibVersion)
+        injectedTags.put("OPENMODS_LIB_NEXT_VERSION", nextMinorVersion(openModsLibVersion))
+    }
 }
