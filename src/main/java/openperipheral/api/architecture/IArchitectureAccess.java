@@ -11,14 +11,14 @@ import openperipheral.api.adapter.method.Env;
  */
 public interface IArchitectureAccess extends IArchitecture {
 
-	public String callerName();
+    public String callerName();
 
-	public String peripheralName();
+    public String peripheralName();
 
-	/**
-	 * Checks if peripheral is attached to valid, running computer.
-	 */
-	public boolean canSignal();
+    /**
+     * Checks if peripheral is attached to valid, running computer.
+     */
+    public boolean canSignal();
 
-	public boolean signal(String name, Object... args);
+    public boolean signal(String name, Object... args);
 }

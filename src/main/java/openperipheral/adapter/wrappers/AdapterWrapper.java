@@ -1,9 +1,11 @@
 package openperipheral.adapter.wrappers;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import java.lang.reflect.Method;
 import java.util.List;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+
 import openmods.Log;
 import openperipheral.adapter.AnnotationMetaExtractor;
 import openperipheral.adapter.IMethodExecutor;
@@ -12,82 +14,83 @@ import openperipheral.api.adapter.method.ScriptCallable;
 
 public abstract class AdapterWrapper {
 
-	public static class MethodWrapException extends RuntimeException {
-		private static final long serialVersionUID = -5116134133615320058L;
+    public static class MethodWrapException extends RuntimeException {
 
-		public MethodWrapException(Method method, Throwable cause) {
-			super(String.format("Failed to wrap method '%s'", method), cause);
-		}
-	}
+        private static final long serialVersionUID = -5116134133615320058L;
 
-	protected final List<IMethodExecutor> methods;
-	protected final Class<?> targetClass;
-	protected final Class<?> adapterClass;
-	protected final Class<?> rootClass;
-	protected final String source;
-	protected final AnnotationMetaExtractor metaInfo;
+        public MethodWrapException(Method method, Throwable cause) {
+            super(String.format("Failed to wrap method '%s'", method), cause);
+        }
+    }
 
-	protected AdapterWrapper(Class<?> adapterClass, Class<?> targetClass, Class<?> rootClass, String source) {
-		this.adapterClass = adapterClass;
-		this.targetClass = targetClass;
-		this.rootClass = rootClass;
-		this.source = source;
-		this.metaInfo = new AnnotationMetaExtractor(adapterClass);
-		this.methods = ImmutableList.copyOf(buildMethodList());
-	}
+    protected final List<IMethodExecutor> methods;
+    protected final Class<?> targetClass;
+    protected final Class<?> adapterClass;
+    protected final Class<?> rootClass;
+    protected final String source;
+    protected final AnnotationMetaExtractor metaInfo;
 
-	public String source() {
-		return source;
-	}
+    protected AdapterWrapper(Class<?> adapterClass, Class<?> targetClass, Class<?> rootClass, String source) {
+        this.adapterClass = adapterClass;
+        this.targetClass = targetClass;
+        this.rootClass = rootClass;
+        this.source = source;
+        this.metaInfo = new AnnotationMetaExtractor(adapterClass);
+        this.methods = ImmutableList.copyOf(buildMethodList());
+    }
 
-	public List<IMethodExecutor> getMethods() {
-		return methods;
-	}
+    public String source() {
+        return source;
+    }
 
-	public Class<?> getAdapterClass() {
-		return adapterClass;
-	}
+    public List<IMethodExecutor> getMethods() {
+        return methods;
+    }
 
-	public Class<?> getTargetClass() {
-		return targetClass;
-	}
+    public Class<?> getAdapterClass() {
+        return adapterClass;
+    }
 
-	public abstract boolean canUse(Class<?> cls);
+    public Class<?> getTargetClass() {
+        return targetClass;
+    }
 
-	public abstract String describe();
+    public abstract boolean canUse(Class<?> cls);
 
-	public abstract IMethodExecutor createExecutor(Method method, MethodDeclaration decl);
+    public abstract String describe();
 
-	protected abstract void prepareDeclaration(MethodDeclaration decl);
+    public abstract IMethodExecutor createExecutor(Method method, MethodDeclaration decl);
 
-	protected List<IMethodExecutor> buildMethodList() {
-		List<IMethodExecutor> result = Lists.newArrayList();
+    protected abstract void prepareDeclaration(MethodDeclaration decl);
 
-		Method[] clsMethods;
-		try {
-			clsMethods = adapterClass.getDeclaredMethods();
-		} catch (Throwable t) {
-			// Trust no one. We got report about ClassNotFound from this place
-			Log.severe(t, "Can't get adapter %s methods (possible sideness fail), bailing out", adapterClass);
-			return result;
-		}
+    protected List<IMethodExecutor> buildMethodList() {
+        List<IMethodExecutor> result = Lists.newArrayList();
 
-		for (Method method : clsMethods) {
-			try {
-				ScriptCallable callableAnn = method.getAnnotation(ScriptCallable.class);
-				if (callableAnn == null) continue;
+        Method[] clsMethods;
+        try {
+            clsMethods = adapterClass.getDeclaredMethods();
+        } catch (Throwable t) {
+            // Trust no one. We got report about ClassNotFound from this place
+            Log.severe(t, "Can't get adapter %s methods (possible sideness fail), bailing out", adapterClass);
+            return result;
+        }
 
-				final MethodDeclaration decl = new MethodDeclaration(rootClass, method, callableAnn, source);
-				prepareDeclaration(decl);
-				decl.verifyAllParamsNamed();
+        for (Method method : clsMethods) {
+            try {
+                ScriptCallable callableAnn = method.getAnnotation(ScriptCallable.class);
+                if (callableAnn == null) continue;
 
-				IMethodExecutor exec = createExecutor(method, decl);
-				result.add(exec);
-			} catch (Throwable e) {
-				throw new MethodWrapException(method, e);
-			}
-		}
+                final MethodDeclaration decl = new MethodDeclaration(rootClass, method, callableAnn, source);
+                prepareDeclaration(decl);
+                decl.verifyAllParamsNamed();
 
-		return result;
-	}
+                IMethodExecutor exec = createExecutor(method, decl);
+                result.add(exec);
+            } catch (Throwable e) {
+                throw new MethodWrapException(method, e);
+            }
+        }
+
+        return result;
+    }
 }

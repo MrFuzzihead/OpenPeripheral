@@ -20,71 +20,74 @@ import openperipheral.interfaces.oc.asm.ICallerBase;
 
 public class PeripheralEnvironmentBase extends ManagedEnvironment implements NamedBlock, ICallerBase {
 
-	private final String type;
+    private final String type;
 
-	private final CachedFactory<Context, IArchitectureAccess> accessCache = new CachedFactory<Context, IArchitectureAccess>() {
-		@Override
-		protected IArchitectureAccess create(Context context) {
-			return ModuleOpenComputers.ENV.createAccess(node(), context);
-		}
-	};
+    private final CachedFactory<Context, IArchitectureAccess> accessCache = new CachedFactory<Context, IArchitectureAccess>() {
 
-	public PeripheralEnvironmentBase(Object target) {
-		this.type = PeripheralTypeProvider.INSTANCE.generateType(target);
+        @Override
+        protected IArchitectureAccess create(Context context) {
+            return ModuleOpenComputers.ENV.createAccess(node(), context);
+        }
+    };
 
-		setNode(Network.newNode(this, Visibility.Network)
-				.withComponent(this.type)
-				.create());
-	}
+    public PeripheralEnvironmentBase(Object target) {
+        this.type = PeripheralTypeProvider.INSTANCE.generateType(target);
 
-	@Override
-	public Object[] call(Object target, IMethodExecutor executor, Context context, Arguments arguments) throws Exception {
-		Object[] args = arguments.toArray();
-		return prepareCall(target, executor, context).call(args);
-	}
+        setNode(
+            Network.newNode(this, Visibility.Network)
+                .withComponent(this.type)
+                .create());
+    }
 
-	protected IMethodCall prepareCall(Object target, IMethodExecutor executor, Context context) {
-		final IMethodCall call = executor.startCall(target);
-		return ModuleOpenComputers.ENV.addPeripheralArgs(call, node(), context);
-	}
+    @Override
+    public Object[] call(Object target, IMethodExecutor executor, Context context, Arguments arguments)
+        throws Exception {
+        Object[] args = arguments.toArray();
+        return prepareCall(target, executor, context).call(args);
+    }
 
-	protected void onConnect(IAttachable target, Node node) {
-		final Environment host = node.host();
-		if (host instanceof Context) {
-			IArchitectureAccess access = accessCache.getOrCreate((Context)host);
-			target.addComputer(access);
-		}
-	}
+    protected IMethodCall prepareCall(Object target, IMethodExecutor executor, Context context) {
+        final IMethodCall call = executor.startCall(target);
+        return ModuleOpenComputers.ENV.addPeripheralArgs(call, node(), context);
+    }
 
-	protected void onDisconnect(IAttachable target, Node node) {
-		final Environment host = node.host();
-		if (host instanceof Context) {
-			IArchitectureAccess access = accessCache.remove((Context)host);
-			if (access != null) target.removeComputer(access);
-		}
-	}
+    protected void onConnect(IAttachable target, Node node) {
+        final Environment host = node.host();
+        if (host instanceof Context) {
+            IArchitectureAccess access = accessCache.getOrCreate((Context) host);
+            target.addComputer(access);
+        }
+    }
 
-	protected static void onConnect(IOpenComputersAttachable target, Node node) {
-		target.onConnect(node);
-	}
+    protected void onDisconnect(IAttachable target, Node node) {
+        final Environment host = node.host();
+        if (host instanceof Context) {
+            IArchitectureAccess access = accessCache.remove((Context) host);
+            if (access != null) target.removeComputer(access);
+        }
+    }
 
-	protected static void onDisconnect(IOpenComputersAttachable target, Node node) {
-		target.onDisconnect(node);
-	}
+    protected static void onConnect(IOpenComputersAttachable target, Node node) {
+        target.onConnect(node);
+    }
 
-	@Override
-	public String preferredName() {
-		return type;
-	}
+    protected static void onDisconnect(IOpenComputersAttachable target, Node node) {
+        target.onDisconnect(node);
+    }
 
-	@Override
-	public int priority() {
-		return -1; // DriverPeripheral is at 0, but we blacklist OP peripherals
-	}
+    @Override
+    public String preferredName() {
+        return type;
+    }
 
-	@Override
-	public Object[] invalidState() {
-		throw new IllegalStateException("Peripheral is no longer valid");
-	}
+    @Override
+    public int priority() {
+        return -1; // DriverPeripheral is at 0, but we blacklist OP peripherals
+    }
+
+    @Override
+    public Object[] invalidState() {
+        throw new IllegalStateException("Peripheral is no longer valid");
+    }
 
 }

@@ -1,63 +1,66 @@
 package openperipheral.adapter.composed;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
 import openperipheral.adapter.AdapterRegistry;
 import openperipheral.adapter.IMethodExecutor;
 
 public abstract class ComposedMethodsFactory<T extends IMethodMap> {
 
-	public static class InvalidClassException extends RuntimeException {
-		private static final long serialVersionUID = 5722017683388067641L;
+    public static class InvalidClassException extends RuntimeException {
 
-		private InvalidClassException() {
-			super();
-		}
+        private static final long serialVersionUID = 5722017683388067641L;
 
-		private InvalidClassException(Throwable cause) {
-			super(cause);
-		}
-	}
+        private InvalidClassException() {
+            super();
+        }
 
-	private final Map<Class<?>, T> classes = Maps.newHashMap();
+        private InvalidClassException(Throwable cause) {
+            super(cause);
+        }
+    }
 
-	private final Set<Class<?>> invalidClasses = Sets.newHashSet();
+    private final Map<Class<?>, T> classes = Maps.newHashMap();
 
-	private final AdapterRegistry adapters;
+    private final Set<Class<?>> invalidClasses = Sets.newHashSet();
 
-	private final ClassMethodsComposer composer;
+    private final AdapterRegistry adapters;
 
-	public ComposedMethodsFactory(AdapterRegistry adapters, Predicate<IMethodExecutor> selector) {
-		this.adapters = adapters;
-		this.composer = new ClassMethodsComposer(selector);
-	}
+    private final ClassMethodsComposer composer;
 
-	public Map<Class<?>, T> listCollectedClasses() {
-		return Collections.unmodifiableMap(classes);
-	}
+    public ComposedMethodsFactory(AdapterRegistry adapters, Predicate<IMethodExecutor> selector) {
+        this.adapters = adapters;
+        this.composer = new ClassMethodsComposer(selector);
+    }
 
-	public T getAdaptedClass(Class<?> targetCls) {
-		if (invalidClasses.contains(targetCls)) throw new InvalidClassException();
+    public Map<Class<?>, T> listCollectedClasses() {
+        return Collections.unmodifiableMap(classes);
+    }
 
-		T value = classes.get(targetCls);
-		if (value == null) {
-			try {
-				Map<String, IMethodExecutor> methods = composer.createMethodsList(targetCls, adapters);
-				value = wrapMethods(targetCls, methods);
-			} catch (Throwable t) {
-				invalidClasses.add(targetCls);
-				throw new InvalidClassException(t);
-			}
+    public T getAdaptedClass(Class<?> targetCls) {
+        if (invalidClasses.contains(targetCls)) throw new InvalidClassException();
 
-			classes.put(targetCls, value);
-		}
+        T value = classes.get(targetCls);
+        if (value == null) {
+            try {
+                Map<String, IMethodExecutor> methods = composer.createMethodsList(targetCls, adapters);
+                value = wrapMethods(targetCls, methods);
+            } catch (Throwable t) {
+                invalidClasses.add(targetCls);
+                throw new InvalidClassException(t);
+            }
 
-		return value;
-	}
+            classes.put(targetCls, value);
+        }
 
-	protected abstract T wrapMethods(Class<?> targetCls, Map<String, IMethodExecutor> methods);
+        return value;
+    }
+
+    protected abstract T wrapMethods(Class<?> targetCls, Map<String, IMethodExecutor> methods);
 }

@@ -9,12 +9,12 @@ import openperipheral.api.IApiInterface;
  */
 public interface IPeripheralTypeProvider extends IApiInterface {
 
-	public void setType(Class<?> cls, String type);
+    public void setType(Class<?> cls, String type);
 
-	public String getType(Class<?> cls);
+    public String getType(Class<?> cls);
 
-	/**
-	 * Get proposed type name for object
-	 */
-	public String generateType(Object target);
+    /**
+     * Get proposed type name for object
+     */
+    public String generateType(Object target);
 }

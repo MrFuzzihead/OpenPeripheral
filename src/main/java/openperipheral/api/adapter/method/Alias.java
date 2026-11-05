@@ -12,5 +12,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Alias {
-	public String[] value();
+
+    public String[] value();
 }

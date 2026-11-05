@@ -11,15 +11,16 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface StructField {
-	public static final int AUTOASSIGN = Integer.MIN_VALUE;
 
-	/**
-	 * Index used during conversion from/to table
-	 */
-	public int index() default AUTOASSIGN;
+    public static final int AUTOASSIGN = Integer.MIN_VALUE;
 
-	/**
-	 * Can this field be missing from input map/table
-	 */
-	public boolean optional() default false;
+    /**
+     * Index used during conversion from/to table
+     */
+    public int index() default AUTOASSIGN;
+
+    /**
+     * Can this field be missing from input map/table
+     */
+    public boolean optional() default false;
 }

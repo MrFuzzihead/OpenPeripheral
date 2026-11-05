@@ -1,21 +1,23 @@
 package openperipheral.adapter;
 
-import com.google.common.base.Optional;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.common.base.Optional;
+
 public interface IMethodExecutor {
-	public IMethodDescription description();
 
-	public IMethodCall startCall(Object target);
+    public IMethodDescription description();
 
-	public boolean isAsynchronous();
+    public IMethodCall startCall(Object target);
 
-	public Optional<String> getReturnSignal();
+    public boolean isAsynchronous();
 
-	public boolean canInclude(String architecture);
+    public Optional<String> getReturnSignal();
 
-	public Map<String, Class<?>> requiredEnv();
+    public boolean canInclude(String architecture);
 
-	public Set<String> featureGroups();
+    public Map<String, Class<?>> requiredEnv();
+
+    public Set<String> featureGroups();
 }

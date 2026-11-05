@@ -5,12 +5,12 @@ import openperipheral.converter.TypeConverter;
 
 public class TypeConversionRegistryCC extends TypeConverter {
 
-	private static final int LUA_OFFSET = 1;
+    private static final int LUA_OFFSET = 1;
 
-	public TypeConversionRegistryCC() {
-		super(LUA_OFFSET);
-		registerIgnored(ILuaObject.class, true);
-		outbound.addFirst(new ConverterCallableCC());
-	}
+    public TypeConversionRegistryCC() {
+        super(LUA_OFFSET);
+        registerIgnored(ILuaObject.class, true);
+        outbound.addFirst(new ConverterCallableCC());
+    }
 
 }

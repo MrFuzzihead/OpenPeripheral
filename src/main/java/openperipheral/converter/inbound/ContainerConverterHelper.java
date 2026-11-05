@@ -1,65 +1,68 @@
 package openperipheral.converter.inbound;
 
+import java.lang.reflect.Type;
+import java.util.Map;
+
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-import java.lang.reflect.Type;
-import java.util.Map;
+
 import openperipheral.api.converter.IConverter;
 import openperipheral.converter.TypeConverter;
 
 public abstract class ContainerConverterHelper<R> {
-	private final int offset;
 
-	public ContainerConverterHelper(int offset) {
-		this.offset = offset;
-	}
+    private final int offset;
 
-	public R convertToContainer(IConverter registry, Object obj, TypeToken<?> type) {
-		final TypeToken<?> componentType = getComponentType(type);
+    public ContainerConverterHelper(int offset) {
+        this.offset = offset;
+    }
 
-		final Map<?, ?> m = (Map<?, ?>)obj;
+    public R convertToContainer(IConverter registry, Object obj, TypeToken<?> type) {
+        final TypeToken<?> componentType = getComponentType(type);
 
-		if (m.isEmpty()) return createEmptyContainer(componentType);
+        final Map<?, ?> m = (Map<?, ?>) obj;
 
-		int indexMax = Integer.MIN_VALUE;
+        if (m.isEmpty()) return createEmptyContainer(componentType);
 
-		final Map<Integer, Object> tmp = Maps.newHashMap();
-		for (Map.Entry<?, ?> e : m.entrySet()) {
-			final Object k = e.getKey();
-			Preconditions.checkArgument(k instanceof Number, "Key '%s' is not number", k);
-			int index = ((Number)k).intValue();
-			Preconditions.checkArgument(index >= offset, "Indices must be larger than %s, got %s", offset, index);
+        int indexMax = Integer.MIN_VALUE;
 
-			index -= offset;
-			if (index > indexMax) indexMax = index;
-			tmp.put(index, e.getValue());
-		}
+        final Map<Integer, Object> tmp = Maps.newHashMap();
+        for (Map.Entry<?, ?> e : m.entrySet()) {
+            final Object k = e.getKey();
+            Preconditions.checkArgument(k instanceof Number, "Key '%s' is not number", k);
+            int index = ((Number) k).intValue();
+            Preconditions.checkArgument(index >= offset, "Indices must be larger than %s, got %s", offset, index);
 
-		final Type valueType = componentType.getType();
+            index -= offset;
+            if (index > indexMax) indexMax = index;
+            tmp.put(index, e.getValue());
+        }
 
-		final boolean isNullable = componentType.isPrimitive();
+        final Type valueType = componentType.getType();
 
-		final int size = indexMax + 1;
-		R result = createNewContainer(componentType, size);
+        final boolean isNullable = componentType.isPrimitive();
 
-		for (int i = 0; i < size; i++) {
-			Object o = tmp.get(i);
-			if (o != null) {
-				final Object converted = TypeConverter.nullableToJava(registry, isNullable, o, valueType);
-				setResult(result, i, converted);
-			}
-		}
+        final int size = indexMax + 1;
+        R result = createNewContainer(componentType, size);
 
-		return result;
-	}
+        for (int i = 0; i < size; i++) {
+            Object o = tmp.get(i);
+            if (o != null) {
+                final Object converted = TypeConverter.nullableToJava(registry, isNullable, o, valueType);
+                setResult(result, i, converted);
+            }
+        }
 
-	protected abstract TypeToken<?> getComponentType(TypeToken<?> containerType);
+        return result;
+    }
 
-	protected abstract R createEmptyContainer(TypeToken<?> componentType);
+    protected abstract TypeToken<?> getComponentType(TypeToken<?> containerType);
 
-	protected abstract R createNewContainer(TypeToken<?> componentType, int size);
+    protected abstract R createEmptyContainer(TypeToken<?> componentType);
 
-	protected abstract void setResult(R result, int index, Object element);
+    protected abstract R createNewContainer(TypeToken<?> componentType, int size);
+
+    protected abstract void setResult(R result, int index, Object element);
 
 }

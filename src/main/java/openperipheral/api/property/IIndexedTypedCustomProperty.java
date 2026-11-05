@@ -8,11 +8,12 @@ import java.lang.reflect.Type;
  * @see IIndexedCustomProperty
  */
 public interface IIndexedTypedCustomProperty<K, V> extends IIndexedCustomProperty<K, V> {
-	/**
-	 *
-	 * @param key
-	 *            'index' value, converted to type defined by generic paramter K
-	 * @return type that should be used to convert value before passing to callback.
-	 */
-	public Type getType(Object key);
+
+    /**
+     *
+     * @param key
+     *            'index' value, converted to type defined by generic paramter K
+     * @return type that should be used to convert value before passing to callback.
+     */
+    public Type getType(Object key);
 }

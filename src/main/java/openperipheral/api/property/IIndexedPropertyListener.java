@@ -1,6 +1,7 @@
 package openperipheral.api.property;
 
 import java.lang.reflect.Field;
+
 import openperipheral.api.adapter.IndexedCallbackProperty;
 import openperipheral.api.adapter.IndexedProperty;
 
@@ -13,8 +14,8 @@ import openperipheral.api.adapter.IndexedProperty;
  */
 public interface IIndexedPropertyListener {
 
-	public void onPropertySet(Field field, Object key, Object value);
+    public void onPropertySet(Field field, Object key, Object value);
 
-	public void onPropertyGet(Field field, Object key);
+    public void onPropertyGet(Field field, Object key);
 
 }

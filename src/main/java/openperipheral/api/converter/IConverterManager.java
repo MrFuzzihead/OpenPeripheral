@@ -11,8 +11,8 @@ import openperipheral.api.IApiInterface;
  */
 public interface IConverterManager extends IApiInterface, ITypeConverterRegistry {
 
-	/**
-	 * Get converted for specific architecture
-	 */
-	public IConverter getConverter(String architecture);
+    /**
+     * Get converted for specific architecture
+     */
+    public IConverter getConverter(String architecture);
 }

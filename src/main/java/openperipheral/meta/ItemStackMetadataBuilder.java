@@ -1,16 +1,19 @@
 package openperipheral.meta;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import cpw.mods.fml.common.registry.GameRegistry;
-import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+
+import cpw.mods.fml.common.registry.GameRegistry;
+import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
 import openperipheral.api.adapter.method.ScriptObject;
 import openperipheral.api.meta.IItemStackCustomMetaProvider;
 import openperipheral.api.meta.IItemStackMetaProvider;
@@ -19,189 +22,194 @@ import openperipheral.api.meta.IMetaProviderProxy;
 
 public class ItemStackMetadataBuilder implements IItemStackPartialMetaBuilder {
 
-	@ScriptObject
-	private static class Proxy implements IMetaProviderProxy {
-		private final Map<String, IItemStackMetaProvider<?>> providers;
-		private final ItemStack stack;
-		private final Item item;
+    @ScriptObject
+    private static class Proxy implements IMetaProviderProxy {
 
-		private Proxy(Map<String, IItemStackMetaProvider<?>> providers, ItemStack stack, Item item) {
-			this.providers = ImmutableMap.copyOf(providers);
-			this.stack = stack;
-			this.item = item;
-		}
+        private final Map<String, IItemStackMetaProvider<?>> providers;
+        private final ItemStack stack;
+        private final Item item;
 
-		@Override
-		public Map<String, Object> basic() {
-			return createBasicProperties(item, stack);
-		}
+        private Proxy(Map<String, IItemStackMetaProvider<?>> providers, ItemStack stack, Item item) {
+            this.providers = ImmutableMap.copyOf(providers);
+            this.stack = stack;
+            this.item = item;
+        }
 
-		@Override
-		public Map<String, Object> all() {
-			Map<String, Object> map = basic();
-			fillCustomProperties(map, providers.values(), item, stack);
-			return map;
-		}
+        @Override
+        public Map<String, Object> basic() {
+            return createBasicProperties(item, stack);
+        }
 
-		@Override
-		public Set<String> keys() {
-			return ImmutableSet.copyOf(providers.keySet());
-		}
+        @Override
+        public Map<String, Object> all() {
+            Map<String, Object> map = basic();
+            fillCustomProperties(map, providers.values(), item, stack);
+            return map;
+        }
 
-		@Override
-		public Map<String, Object> select(String... keys) {
-			Item item = stack.getItem();
-			if (item == null) return ImmutableMap.of();
+        @Override
+        public Set<String> keys() {
+            return ImmutableSet.copyOf(providers.keySet());
+        }
 
-			Map<String, Object> result = basic();
+        @Override
+        public Map<String, Object> select(String... keys) {
+            Item item = stack.getItem();
+            if (item == null) return ImmutableMap.of();
 
-			for (String key : keys) {
-				IItemStackMetaProvider<?> provider = providers.get(key);
-				if (provider != null) {
-					Object value = getProperty(stack, item, provider);
-					if (value != null) result.put(key, value);
-				}
-			}
+            Map<String, Object> result = basic();
 
-			return result;
-		}
+            for (String key : keys) {
+                IItemStackMetaProvider<?> provider = providers.get(key);
+                if (provider != null) {
+                    Object value = getProperty(stack, item, provider);
+                    if (value != null) result.put(key, value);
+                }
+            }
 
-		@Override
-		public Object single(String key) {
-			IItemStackMetaProvider<?> provider = providers.get(key);
-			return provider != null? getProperty(stack, item, provider) : null;
-		}
-	}
+            return result;
+        }
 
-	private static final Map<String, Object> NULL;
+        @Override
+        public Object single(String key) {
+            IItemStackMetaProvider<?> provider = providers.get(key);
+            return provider != null ? getProperty(stack, item, provider) : null;
+        }
+    }
 
-	static {
-		ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-		builder.put("id", "invalid");
-		NULL = builder.build();
-	}
+    private static final Map<String, Object> NULL;
 
-	private static Map<String, Object> createBasicProperties(Item item, ItemStack itemstack) {
-		Map<String, Object> map = Maps.newHashMap();
-		UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(item);
+    static {
+        ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
+        builder.put("id", "invalid");
+        NULL = builder.build();
+    }
 
-		map.put("id", id != null? id.toString() : "?");
-		map.put("name", id != null? id.name : "?");
-		map.put("mod_id", id != null? id.modId : "?");
+    private static Map<String, Object> createBasicProperties(Item item, ItemStack itemstack) {
+        Map<String, Object> map = Maps.newHashMap();
+        UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(item);
 
-		map.put("display_name", getNameForItemStack(itemstack));
-		map.put("raw_name", getRawNameForStack(itemstack));
-		map.put("qty", itemstack.stackSize);
-		map.put("dmg", itemstack.getItemDamage());
+        map.put("id", id != null ? id.toString() : "?");
+        map.put("name", id != null ? id.name : "?");
+        map.put("mod_id", id != null ? id.modId : "?");
 
-		if (item.showDurabilityBar(itemstack)) map.put("health_bar", item.getDurabilityForDisplay(itemstack));
-		map.put("max_dmg", itemstack.getMaxDamage());
-		map.put("max_size", itemstack.getMaxStackSize());
+        map.put("display_name", getNameForItemStack(itemstack));
+        map.put("raw_name", getRawNameForStack(itemstack));
+        map.put("qty", itemstack.stackSize);
+        map.put("dmg", itemstack.getItemDamage());
 
-		return map;
-	}
+        if (item.showDurabilityBar(itemstack)) map.put("health_bar", item.getDurabilityForDisplay(itemstack));
+        map.put("max_dmg", itemstack.getMaxDamage());
+        map.put("max_size", itemstack.getMaxStackSize());
 
-	private static void fillCustomProperties(Map<String, Object> map, Iterable<IItemStackMetaProvider<?>> providers, Item item, ItemStack itemstack) {
-		for (IItemStackMetaProvider<?> provider : providers) {
-			Object converted = getProperty(itemstack, item, provider);
-			if (converted != null) {
-				final String key = provider.getKey();
-				map.put(key, converted);
-			}
-		}
-	}
+        return map;
+    }
 
-	private static String getNameForItemStack(ItemStack is) {
-		try {
-			return is.getDisplayName();
-		} catch (Exception e) {}
+    private static void fillCustomProperties(Map<String, Object> map, Iterable<IItemStackMetaProvider<?>> providers,
+        Item item, ItemStack itemstack) {
+        for (IItemStackMetaProvider<?> provider : providers) {
+            Object converted = getProperty(itemstack, item, provider);
+            if (converted != null) {
+                final String key = provider.getKey();
+                map.put(key, converted);
+            }
+        }
+    }
 
-		try {
-			return is.getUnlocalizedName();
-		} catch (Exception e2) {}
+    private static String getNameForItemStack(ItemStack is) {
+        try {
+            return is.getDisplayName();
+        } catch (Exception e) {}
 
-		return "unknown";
-	}
+        try {
+            return is.getUnlocalizedName();
+        } catch (Exception e2) {}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static Object getProperty(ItemStack stack, Item item, IItemStackMetaProvider provider) {
-		return provider.getMeta(item, stack);
-	}
+        return "unknown";
+    }
 
-	private static Map<String, IItemStackMetaProvider<?>> getProviders(Item item, ItemStack stack) {
-		final Map<String, IItemStackMetaProvider<?>> immutableProviders = MetaProvidersRegistry.ITEMS.getProviders(item.getClass());
-		final Map<String, IItemStackMetaProvider<?>> providers = Maps.newHashMap(immutableProviders);
-		filterCustomProviders(providers, item, stack);
-		return providers;
-	}
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static Object getProperty(ItemStack stack, Item item, IItemStackMetaProvider provider) {
+        return provider.getMeta(item, stack);
+    }
 
-	@SuppressWarnings("unchecked")
-	private static void filterCustomProviders(Map<String, IItemStackMetaProvider<?>> providers, Item item, ItemStack stack) {
-		Iterator<IItemStackMetaProvider<?>> it = providers.values().iterator();
+    private static Map<String, IItemStackMetaProvider<?>> getProviders(Item item, ItemStack stack) {
+        final Map<String, IItemStackMetaProvider<?>> immutableProviders = MetaProvidersRegistry.ITEMS
+            .getProviders(item.getClass());
+        final Map<String, IItemStackMetaProvider<?>> providers = Maps.newHashMap(immutableProviders);
+        filterCustomProviders(providers, item, stack);
+        return providers;
+    }
 
-		while (it.hasNext()) {
-			final IItemStackMetaProvider<?> provider = it.next();
-			if ((provider instanceof IItemStackCustomMetaProvider) &&
-					!((IItemStackCustomMetaProvider<Item>)provider).canApply(item, stack))
-				it.remove();
-		}
-	}
+    @SuppressWarnings("unchecked")
+    private static void filterCustomProviders(Map<String, IItemStackMetaProvider<?>> providers, Item item,
+        ItemStack stack) {
+        Iterator<IItemStackMetaProvider<?>> it = providers.values()
+            .iterator();
 
-	public static String getRawNameForStack(ItemStack is) {
-		try {
-			return is.getUnlocalizedName().toLowerCase(Locale.ENGLISH);
-		} catch (Exception e) {}
+        while (it.hasNext()) {
+            final IItemStackMetaProvider<?> provider = it.next();
+            if ((provider instanceof IItemStackCustomMetaProvider)
+                && !((IItemStackCustomMetaProvider<Item>) provider).canApply(item, stack)) it.remove();
+        }
+    }
 
-		return "unknown";
-	}
+    public static String getRawNameForStack(ItemStack is) {
+        try {
+            return is.getUnlocalizedName()
+                .toLowerCase(Locale.ENGLISH);
+        } catch (Exception e) {}
 
-	@Override
-	public IMetaProviderProxy createProxy(final ItemStack stack) {
-		final Item item = stack.getItem();
-		if (item == null) return null;
+        return "unknown";
+    }
 
-		final Map<String, IItemStackMetaProvider<?>> providers = getProviders(item, stack);
-		return new Proxy(providers, stack, item);
-	}
+    @Override
+    public IMetaProviderProxy createProxy(final ItemStack stack) {
+        final Item item = stack.getItem();
+        if (item == null) return null;
 
-	@Override
-	public Map<String, Object> getBasicItemStackMetadata(ItemStack itemstack) {
-		if (itemstack == null) return NULL;
-		Item item = itemstack.getItem();
+        final Map<String, IItemStackMetaProvider<?>> providers = getProviders(item, stack);
+        return new Proxy(providers, stack, item);
+    }
 
-		return createBasicProperties(item, itemstack);
-	}
+    @Override
+    public Map<String, Object> getBasicItemStackMetadata(ItemStack itemstack) {
+        if (itemstack == null) return NULL;
+        Item item = itemstack.getItem();
 
-	@Override
-	public Map<String, Object> getItemStackMetadata(ItemStack itemstack) {
-		if (itemstack == null) return NULL;
-		Item item = itemstack.getItem();
+        return createBasicProperties(item, itemstack);
+    }
 
-		Map<String, Object> map = createBasicProperties(item, itemstack);
+    @Override
+    public Map<String, Object> getItemStackMetadata(ItemStack itemstack) {
+        if (itemstack == null) return NULL;
+        Item item = itemstack.getItem();
 
-		final Iterable<IItemStackMetaProvider<?>> providers = getProviders(item, itemstack).values();
-		fillCustomProperties(map, providers, item, itemstack);
-		return map;
-	}
+        Map<String, Object> map = createBasicProperties(item, itemstack);
 
-	@Override
-	public Object getItemStackMetadata(String key, ItemStack stack) {
-		Item item = stack.getItem();
-		if (item == null) return null;
+        final Iterable<IItemStackMetaProvider<?>> providers = getProviders(item, itemstack).values();
+        fillCustomProperties(map, providers, item, itemstack);
+        return map;
+    }
 
-		Map<String, IItemStackMetaProvider<?>> providers = getProviders(item, stack);
+    @Override
+    public Object getItemStackMetadata(String key, ItemStack stack) {
+        Item item = stack.getItem();
+        if (item == null) return null;
 
-		IItemStackMetaProvider<?> provider = providers.get(key);
-		return provider != null? getProperty(stack, item, provider) : null;
-	}
+        Map<String, IItemStackMetaProvider<?>> providers = getProviders(item, stack);
 
-	@Override
-	public Set<String> getKeys(ItemStack target) {
-		return ImmutableSet.copyOf(getProviders(target.getItem(), target).keySet());
-	}
+        IItemStackMetaProvider<?> provider = providers.get(key);
+        return provider != null ? getProperty(stack, item, provider) : null;
+    }
 
-	@Override
-	public void register(IItemStackMetaProvider<?> provider) {
-		MetaProvidersRegistry.ITEMS.addProvider(provider);
-	}
+    @Override
+    public Set<String> getKeys(ItemStack target) {
+        return ImmutableSet.copyOf(getProviders(target.getItem(), target).keySet());
+    }
+
+    @Override
+    public void register(IItemStackMetaProvider<?> provider) {
+        MetaProvidersRegistry.ITEMS.addProvider(provider);
+    }
 }

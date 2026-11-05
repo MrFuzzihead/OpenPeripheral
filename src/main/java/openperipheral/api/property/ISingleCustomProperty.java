@@ -1,6 +1,7 @@
 package openperipheral.api.property;
 
 import java.lang.reflect.Field;
+
 import openperipheral.api.adapter.CallbackProperty;
 import openperipheral.api.adapter.Property;
 
@@ -12,7 +13,7 @@ import openperipheral.api.adapter.Property;
  */
 public interface ISingleCustomProperty<V> {
 
-	public V get(Object owner, Field field);
+    public V get(Object owner, Field field);
 
-	public void set(Object owner, Field field, V value);
+    public void set(Object owner, Field field, V value);
 }

@@ -7,10 +7,9 @@ import openperipheral.Config;
 
 public class OpenComputersChecker implements IArchitecturePredicate {
 
-	@Override
-	public boolean isEnabled() {
-		return Config.interfaceOpenComputers
-				&& Loader.isModLoaded(Mods.OPENCOMPUTERS);
-	}
+    @Override
+    public boolean isEnabled() {
+        return Config.interfaceOpenComputers && Loader.isModLoaded(Mods.OPENCOMPUTERS);
+    }
 
 }

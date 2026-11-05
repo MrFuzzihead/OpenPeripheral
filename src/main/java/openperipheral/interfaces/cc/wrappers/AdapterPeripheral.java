@@ -1,14 +1,18 @@
 package openperipheral.interfaces.cc.wrappers;
 
+import java.util.Arrays;
+
+import org.apache.logging.log4j.Level;
+
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
+
 import dan200.computercraft.api.filesystem.IMount;
 import dan200.computercraft.api.lua.ILuaContext;
 import dan200.computercraft.api.lua.ILuaTask;
 import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
-import java.util.Arrays;
 import openmods.Log;
 import openmods.utils.CachedFactory;
 import openperipheral.adapter.AdapterLogicException;
@@ -26,150 +30,174 @@ import openperipheral.interfaces.cc.StringMount;
 import openperipheral.interfaces.cc.SynchronousExecutor;
 import openperipheral.interfaces.cc.UtilsResourceMount;
 import openperipheral.util.DocUtils;
-import org.apache.logging.log4j.Level;
 
 public class AdapterPeripheral implements IPeripheral, IOpenPeripheral {
 
-	private static final String MOUNT_NAME = "openp";
-	private static final IMount MOUNT = new UtilsResourceMount();
-	private final Object[] NULL = new Object[0];
+    private static final String MOUNT_NAME = "openp";
+    private static final IMount MOUNT = new UtilsResourceMount();
+    private final Object[] NULL = new Object[0];
 
-	protected final String type;
-	protected final Object target;
-	private final IMount docMount;
+    protected final String type;
+    protected final Object target;
+    private final IMount docMount;
 
-	private final IndexedMethodMap methods;
+    private final IndexedMethodMap methods;
 
-	private final CachedFactory<IComputerAccess, IArchitectureAccess> accessCache = new CachedFactory<IComputerAccess, IArchitectureAccess>() {
-		@Override
-		protected IArchitectureAccess create(IComputerAccess computer) {
-			return ModuleComputerCraft.ENV.createAccess(computer);
-		}
-	};
+    private final CachedFactory<IComputerAccess, IArchitectureAccess> accessCache = new CachedFactory<IComputerAccess, IArchitectureAccess>() {
 
-	public AdapterPeripheral(IndexedMethodMap methods, Object target) {
-		this.methods = methods;
-		this.type = PeripheralTypeProvider.INSTANCE.generateType(target);
-		this.target = target;
-		this.docMount = new StringMount(DocUtils.createPeripheralHelpText(target.getClass(), type, methods));
-	}
+        @Override
+        protected IArchitectureAccess create(IComputerAccess computer) {
+            return ModuleComputerCraft.ENV.createAccess(computer);
+        }
+    };
 
-	@Override
-	public String getType() {
-		return type;
-	}
+    public AdapterPeripheral(IndexedMethodMap methods, Object target) {
+        this.methods = methods;
+        this.type = PeripheralTypeProvider.INSTANCE.generateType(target);
+        this.target = target;
+        this.docMount = new StringMount(DocUtils.createPeripheralHelpText(target.getClass(), type, methods));
+    }
 
-	@Override
-	public String[] getMethodNames() {
-		return methods.getMethodNames();
-	}
+    @Override
+    public String getType() {
+        return type;
+    }
 
-	private IMethodCall prepareCall(IMethodExecutor executor, IComputerAccess computer, ILuaContext context) {
-		final IMethodCall call = executor.startCall(target);
-		return ModuleComputerCraft.ENV.addPeripheralArgs(call, computer, context);
-	}
+    @Override
+    public String[] getMethodNames() {
+        return methods.getMethodNames();
+    }
 
-	private Object[] executeCall(IMethodCall call, int methodIndex, Object[] arguments) throws LuaException, InterruptedException {
-		try {
-			return call.call(arguments);
-		} catch (InterruptedException e) {
-			throw e;
-		} catch (LuaException e) {
-			throw e;
-		} catch (Throwable e) {
-			String methodName = methods.getMethodName(methodIndex);
-			Log.log(Level.DEBUG, e, "Error during method %s(%d) execution on peripheral %s, args: %s",
-					methodName, methodIndex, type, Arrays.toString(arguments));
-			throw new LuaException(AdapterLogicException.getMessageForThrowable(e));
-		}
-	}
+    private IMethodCall prepareCall(IMethodExecutor executor, IComputerAccess computer, ILuaContext context) {
+        final IMethodCall call = executor.startCall(target);
+        return ModuleComputerCraft.ENV.addPeripheralArgs(call, computer, context);
+    }
 
-	private Object[] executeToSignal(int callbackId, int methodIndex, IMethodCall preparedCall, Object[] arguments) {
-		try {
-			Object[] callResult = executeCall(preparedCall, methodIndex, arguments);
-			Object[] fullResult = new Object[callResult.length + 2];
-			fullResult[0] = callbackId;
-			fullResult[1] = true;
-			System.arraycopy(callResult, 0, fullResult, 2, callResult.length);
-			return fullResult;
-		} catch (InterruptedException e) {
-			return new Object[] { callbackId, false };
-		} catch (LuaException e) {
-			return new Object[] { callbackId, false, e.getMessage() };
-		}
-	}
+    private Object[] executeCall(IMethodCall call, int methodIndex, Object[] arguments)
+        throws LuaException, InterruptedException {
+        try {
+            return call.call(arguments);
+        } catch (InterruptedException e) {
+            throw e;
+        } catch (LuaException e) {
+            throw e;
+        } catch (Throwable e) {
+            String methodName = methods.getMethodName(methodIndex);
+            Log.log(
+                Level.DEBUG,
+                e,
+                "Error during method %s(%d) execution on peripheral %s, args: %s",
+                methodName,
+                methodIndex,
+                type,
+                Arrays.toString(arguments));
+            throw new LuaException(AdapterLogicException.getMessageForThrowable(e));
+        }
+    }
 
-	@Override
-	public Object[] callMethod(final IComputerAccess computer, final ILuaContext context, final int index, final Object[] arguments) throws LuaException, InterruptedException {
-		// this should throw if peripheral isn't attached
-		computer.getAttachmentName();
+    private Object[] executeToSignal(int callbackId, int methodIndex, IMethodCall preparedCall, Object[] arguments) {
+        try {
+            Object[] callResult = executeCall(preparedCall, methodIndex, arguments);
+            Object[] fullResult = new Object[callResult.length + 2];
+            fullResult[0] = callbackId;
+            fullResult[1] = true;
+            System.arraycopy(callResult, 0, fullResult, 2, callResult.length);
+            return fullResult;
+        } catch (InterruptedException e) {
+            return new Object[] { callbackId, false };
+        } catch (LuaException e) {
+            return new Object[] { callbackId, false, e.getMessage() };
+        }
+    }
 
-		final IMethodExecutor method = methods.getMethod(index);
-		Preconditions.checkNotNull(method, "Invalid method index: %d", index);
+    @Override
+    public Object[] callMethod(final IComputerAccess computer, final ILuaContext context, final int index,
+        final Object[] arguments) throws LuaException, InterruptedException {
+        return toLegacyResult(callMethodResult(computer, context, index, arguments));
+    }
 
-		final IMethodCall preparedCall = prepareCall(method, computer, context);
+    private static Object[] toLegacyResult(Object result) {
+        if (result instanceof Object[]) return (Object[]) result;
+        // Legacy entrypoint: a single MethodResult is understood by the bridge as "suspend"
+        return new Object[] { result };
+    }
 
-		final Optional<String> returnSignal = method.getReturnSignal();
-		if (returnSignal.isPresent()) {
-			final int callbackId = SignallingGlobals.instance.nextCallbackId();
-			final String returnSignalId = returnSignal.get();
-			if (method.isAsynchronous()) {
-				SignallingGlobals.instance.scheduleTask(new Runnable() {
-					@Override
-					public void run() {
-						computer.queueEvent(returnSignalId, executeToSignal(callbackId, index, preparedCall, arguments));
-					}
-				});
-			} else {
-				context.issueMainThreadTask(new ILuaTask() {
-					@Override
-					public Object[] execute() {
-						computer.queueEvent(returnSignalId, executeToSignal(callbackId, index, preparedCall, arguments));
-						// this will be used as 'task_complete' result, so we will ignore it
-						return NULL;
-					}
-				});
-			}
-			return new Object[] { callbackId };
-		} else {
-			if (method.isAsynchronous()) return executeCall(preparedCall, index, arguments);
-			else {
-				Object[] results = SynchronousExecutor.executeInMainThread(context, new SynchronousExecutor.Task() {
-					@Override
-					public Object[] execute() throws LuaException, InterruptedException {
-						return executeCall(preparedCall, index, arguments);
-					}
-				});
-				return results;
-			}
-		}
-	}
+    @Override
+    public Object callMethodResult(final IComputerAccess computer, final ILuaContext context, final int index,
+        final Object[] arguments) throws LuaException, InterruptedException {
+        // this should throw if peripheral isn't attached
+        computer.getAttachmentName();
 
-	@Override
-	public void attach(IComputerAccess computer) {
-		computer.mount(MOUNT_NAME, AdapterPeripheral.MOUNT);
-		computer.mount("rom/help/" + computer.getAttachmentName(), docMount);
-		if (target instanceof IAttachable) {
-			IArchitectureAccess access = accessCache.getOrCreate(computer);
-			((IAttachable)target).addComputer(access);
-		}
-		if (target instanceof IComputerCraftAttachable) ((IComputerCraftAttachable)target).addComputer(computer);
-	}
+        final IMethodExecutor method = methods.getMethod(index);
+        Preconditions.checkNotNull(method, "Invalid method index: %d", index);
 
-	@Override
-	public void detach(IComputerAccess computer) {
-		if (target instanceof IAttachable) {
-			IArchitectureAccess access = accessCache.remove(computer);
-			if (access != null) ((IAttachable)target).removeComputer(access);
-		}
+        final IMethodCall preparedCall = prepareCall(method, computer, context);
 
-		if (target instanceof IComputerCraftAttachable) ((IComputerCraftAttachable)target).removeComputer(computer);
-	}
+        final Optional<String> returnSignal = method.getReturnSignal();
+        if (returnSignal.isPresent()) {
+            final int callbackId = SignallingGlobals.instance.nextCallbackId();
+            final String returnSignalId = returnSignal.get();
+            if (method.isAsynchronous()) {
+                SignallingGlobals.instance.scheduleTask(new Runnable() {
 
-	@Override
-	public boolean equals(IPeripheral other) {
-		if (other == this) return true;
-		if (other instanceof AdapterPeripheral) return ((AdapterPeripheral)other).target == target;
-		return false;
-	}
+                    @Override
+                    public void run() {
+                        computer
+                            .queueEvent(returnSignalId, executeToSignal(callbackId, index, preparedCall, arguments));
+                    }
+                });
+            } else {
+                context.issueMainThreadTask(new ILuaTask() {
+
+                    @Override
+                    public Object[] execute() {
+                        computer
+                            .queueEvent(returnSignalId, executeToSignal(callbackId, index, preparedCall, arguments));
+                        // this will be used as 'task_complete' result, so we will ignore it
+                        return NULL;
+                    }
+                });
+            }
+            return new Object[] { callbackId };
+        } else {
+            if (method.isAsynchronous()) return executeCall(preparedCall, index, arguments);
+            else {
+                return SynchronousExecutor.executeInMainThread(context, new SynchronousExecutor.Task() {
+
+                    @Override
+                    public Object[] execute() throws LuaException, InterruptedException {
+                        return executeCall(preparedCall, index, arguments);
+                    }
+                });
+            }
+        }
+    }
+
+    @Override
+    public void attach(IComputerAccess computer) {
+        computer.mount(MOUNT_NAME, AdapterPeripheral.MOUNT);
+        computer.mount("rom/help/" + computer.getAttachmentName(), docMount);
+        if (target instanceof IAttachable) {
+            IArchitectureAccess access = accessCache.getOrCreate(computer);
+            ((IAttachable) target).addComputer(access);
+        }
+        if (target instanceof IComputerCraftAttachable) ((IComputerCraftAttachable) target).addComputer(computer);
+    }
+
+    @Override
+    public void detach(IComputerAccess computer) {
+        if (target instanceof IAttachable) {
+            IArchitectureAccess access = accessCache.remove(computer);
+            if (access != null) ((IAttachable) target).removeComputer(access);
+        }
+
+        if (target instanceof IComputerCraftAttachable) ((IComputerCraftAttachable) target).removeComputer(computer);
+    }
+
+    @Override
+    public boolean equals(IPeripheral other) {
+        if (other == this) return true;
+        if (other instanceof AdapterPeripheral) return ((AdapterPeripheral) other).target == target;
+        return false;
+    }
 }

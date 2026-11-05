@@ -4,24 +4,25 @@ import java.util.Locale;
 import java.util.Map;
 
 public enum ReturnType {
-	TABLE(Map.class),
-	NUMBER(Double.class),
-	STRING(String.class),
-	VOID(void.class),
-	BOOLEAN(Boolean.class),
-	OBJECT(Object.class);
 
-	private Class<?> javaType;
+    TABLE(Map.class),
+    NUMBER(Double.class),
+    STRING(String.class),
+    VOID(void.class),
+    BOOLEAN(Boolean.class),
+    OBJECT(Object.class);
 
-	ReturnType(Class<?> javaType) {
-		this.javaType = javaType;
-	}
+    private Class<?> javaType;
 
-	public Class<?> getJavaType() {
-		return javaType;
-	}
+    ReturnType(Class<?> javaType) {
+        this.javaType = javaType;
+    }
 
-	public String getName() {
-		return name().toLowerCase(Locale.ENGLISH);
-	}
+    public Class<?> getJavaType() {
+        return javaType;
+    }
+
+    public String getName() {
+        return name().toLowerCase(Locale.ENGLISH);
+    }
 }

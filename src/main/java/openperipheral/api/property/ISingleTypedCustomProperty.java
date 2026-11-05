@@ -8,5 +8,6 @@ import java.lang.reflect.Type;
  * @see ISingleCustomProperty
  */
 public interface ISingleTypedCustomProperty<V> extends ISingleCustomProperty<V> {
-	public Type getType();
+
+    public Type getType();
 }

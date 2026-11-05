@@ -6,7 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Types marked with this annotation will be converted to implementation-specific callable object (like ILuaObject) when returned to script environment.
+ * Types marked with this annotation will be converted to implementation-specific callable object (like ILuaObject) when
+ * returned to script environment.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

@@ -1,6 +1,5 @@
 package openperipheral.tests;
 
-import com.google.common.base.Preconditions;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -12,237 +11,247 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.google.common.base.Preconditions;
+
 import openperipheral.adapter.types.classifier.TypeClassifier;
 import openperipheral.api.adapter.IScriptType;
 import openperipheral.api.struct.ScriptStruct;
 import openperipheral.api.struct.StructField;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class TypeQualifierTest {
 
-	public static void testQualifier(String expected, Type type) {
-		final TypeClassifier qualifier = new TypeClassifier();
-		final IScriptType qualified = qualifier.classifyType(type);
-		Assert.assertEquals(expected, qualified.describe());
-	}
+    public static void testQualifier(String expected, Type type) {
+        final TypeClassifier qualifier = new TypeClassifier();
+        final IScriptType qualified = qualifier.classifyType(type);
+        Assert.assertEquals(expected, qualified.describe());
+    }
 
-	@Test
-	public void testPrimitive() {
-		testQualifier("boolean", Boolean.class);
+    @Test
+    public void testPrimitive() {
+        testQualifier("boolean", Boolean.class);
 
-		testQualifier("string", String.class);
-		testQualifier("string", UUID.class);
+        testQualifier("string", String.class);
+        testQualifier("string", UUID.class);
 
-		testQualifier("void", void.class);
-		testQualifier("void", Void.class);
+        testQualifier("void", void.class);
+        testQualifier("void", Void.class);
 
-		testQualifier("number", int.class);
-		testQualifier("number", Integer.class);
-		testQualifier("number", float.class);
-		testQualifier("number", Float.class);
-	}
+        testQualifier("number", int.class);
+        testQualifier("number", Integer.class);
+        testQualifier("number", float.class);
+        testQualifier("number", Float.class);
+    }
 
-	public static enum TestEnum {
-		A,
-		B,
-		C,
-		D;
-	}
+    public static enum TestEnum {
+        A,
+        B,
+        C,
+        D;
+    }
 
-	public static enum TestInstancedEnum {
-		E {},
-		F {},
-		G {},
-		H {};
-	}
+    public static enum TestInstancedEnum {
+        E {},
+        F {},
+        G {},
+        H {};
+    }
 
-	@Test
-	public void testEnum() {
-		testQualifier("string{A,B,C,D}", TestEnum.class);
-		testQualifier("string{E,F,G,H}", TestInstancedEnum.class);
-	}
+    @Test
+    public void testEnum() {
+        testQualifier("string{A,B,C,D}", TestEnum.class);
+        testQualifier("string{E,F,G,H}", TestInstancedEnum.class);
+    }
 
-	@ScriptStruct
-	public static class BasicStruct {
-		@StructField
-		public int a;
+    @ScriptStruct
+    public static class BasicStruct {
 
-		@StructField
-		public String b;
-	}
+        @StructField
+        public int a;
 
-	@Test
-	public void testBasicStruct() {
-		testQualifier("{a:number,b:string}", BasicStruct.class);
-	}
+        @StructField
+        public String b;
+    }
 
-	@ScriptStruct
-	public static class OptionalStruct {
-		@StructField
-		public int a;
+    @Test
+    public void testBasicStruct() {
+        testQualifier("{a:number,b:string}", BasicStruct.class);
+    }
 
-		@StructField
-		public String b;
+    @ScriptStruct
+    public static class OptionalStruct {
 
-		@StructField(optional = true)
-		public boolean c;
-	}
+        @StructField
+        public int a;
 
-	@Test
-	public void testStructWithOptional() {
-		testQualifier("{a:number,b:string,c:boolean?}", OptionalStruct.class);
-	}
+        @StructField
+        public String b;
 
-	@ScriptStruct
-	public static class OrderedStruct {
-		@StructField(index = 2)
-		public int a;
+        @StructField(optional = true)
+        public boolean c;
+    }
 
-		@StructField(index = 0)
-		public String b;
+    @Test
+    public void testStructWithOptional() {
+        testQualifier("{a:number,b:string,c:boolean?}", OptionalStruct.class);
+    }
 
-		@StructField(index = 1)
-		public boolean c;
-	}
+    @ScriptStruct
+    public static class OrderedStruct {
 
-	@Test
-	public void testOrderedStruct() {
-		testQualifier("{b:string,c:boolean,a:number}", OrderedStruct.class);
-	}
+        @StructField(index = 2)
+        public int a;
 
-	@ScriptStruct
-	public static class NestedStruct {
-		@StructField
-		public int a;
+        @StructField(index = 0)
+        public String b;
 
-		@StructField
-		public BasicStruct b;
-	}
+        @StructField(index = 1)
+        public boolean c;
+    }
 
-	@Test
-	public void testNestedStruct() {
-		testQualifier("{a:number,b:{a:number,b:string}}", NestedStruct.class);
-	}
+    @Test
+    public void testOrderedStruct() {
+        testQualifier("{b:string,c:boolean,a:number}", OrderedStruct.class);
+    }
 
-	@Retention(RetentionPolicy.RUNTIME)
-	@Target(ElementType.FIELD)
-	public static @interface ExpectedConversion {
-		public String value();
-	}
+    @ScriptStruct
+    public static class NestedStruct {
 
-	public static class TestFields {
-		@ExpectedConversion("{string->number}")
-		public Map<String, Integer> mapStringInteger;
+        @StructField
+        public int a;
 
-		@ExpectedConversion("{boolean->{a:number,b:string}}")
-		public Map<Boolean, BasicStruct> mapStringStruct;
+        @StructField
+        public BasicStruct b;
+    }
 
-		@ExpectedConversion("{string{A,B,C,D}->number}")
-		public Map<TestEnum, Integer> mapEnumInteger;
+    @Test
+    public void testNestedStruct() {
+        testQualifier("{a:number,b:{a:number,b:string}}", NestedStruct.class);
+    }
 
-		@ExpectedConversion("{number->number}")
-		public Map<Float, Integer> mapFloatInteger;
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    public static @interface ExpectedConversion {
 
-		@ExpectedConversion("{number->{string->string{A,B,C,D}}}")
-		public Map<Float, Map<String, TestEnum>> mapNested;
+        public String value();
+    }
 
-		@ExpectedConversion("{number->[number]}")
-		public Map<Float, int[]> mapFloatArray;
+    public static class TestFields {
 
-		@ExpectedConversion("table")
-		public Map<Integer, ?> mapRawValue;
+        @ExpectedConversion("{string->number}")
+        public Map<String, Integer> mapStringInteger;
 
-		@ExpectedConversion("table")
-		public Map<?, String> mapRawKey;
+        @ExpectedConversion("{boolean->{a:number,b:string}}")
+        public Map<Boolean, BasicStruct> mapStringStruct;
 
-		@ExpectedConversion("table")
-		public Map<?, ?> mapRaw;
+        @ExpectedConversion("{string{A,B,C,D}->number}")
+        public Map<TestEnum, Integer> mapEnumInteger;
 
-		@ExpectedConversion("[number]")
-		public List<Integer> listInteger;
+        @ExpectedConversion("{number->number}")
+        public Map<Float, Integer> mapFloatInteger;
 
-		@ExpectedConversion("[string]")
-		public List<String> listString;
+        @ExpectedConversion("{number->{string->string{A,B,C,D}}}")
+        public Map<Float, Map<String, TestEnum>> mapNested;
 
-		@ExpectedConversion("[{a:number,b:string}]")
-		public List<BasicStruct> listStruct;
+        @ExpectedConversion("{number->[number]}")
+        public Map<Float, int[]> mapFloatArray;
 
-		@ExpectedConversion("[[{a:number,b:string}]]")
-		public List<BasicStruct[]> listArrayStruct;
+        @ExpectedConversion("table")
+        public Map<Integer, ?> mapRawValue;
 
-		@ExpectedConversion("[string{A,B,C,D}]")
-		public List<TestEnum> listEnum;
+        @ExpectedConversion("table")
+        public Map<?, String> mapRawKey;
 
-		@ExpectedConversion("[[string{A,B,C,D}]]")
-		public List<Collection<TestEnum>> listNested;
+        @ExpectedConversion("table")
+        public Map<?, ?> mapRaw;
 
-		@ExpectedConversion("table")
-		public List<?> listRaw;
+        @ExpectedConversion("[number]")
+        public List<Integer> listInteger;
 
-		@ExpectedConversion("{number}")
-		public Set<Integer> setInteger;
+        @ExpectedConversion("[string]")
+        public List<String> listString;
 
-		@ExpectedConversion("{string}")
-		public Set<String> setString;
+        @ExpectedConversion("[{a:number,b:string}]")
+        public List<BasicStruct> listStruct;
 
-		@ExpectedConversion("{string{A,B,C,D}}")
-		public Set<TestEnum> setEnum;
+        @ExpectedConversion("[[{a:number,b:string}]]")
+        public List<BasicStruct[]> listArrayStruct;
 
-		@ExpectedConversion("{{string{A,B,C,D}}}")
-		public Set<Set<TestEnum>> setNested;
+        @ExpectedConversion("[string{A,B,C,D}]")
+        public List<TestEnum> listEnum;
 
-		@ExpectedConversion("table")
-		public Set<?> setRaw;
+        @ExpectedConversion("[[string{A,B,C,D}]]")
+        public List<Collection<TestEnum>> listNested;
 
-		@ExpectedConversion("[[number]]")
-		List<Integer>[] arrayList;
+        @ExpectedConversion("table")
+        public List<?> listRaw;
 
-		@ExpectedConversion("[{number}]")
-		Set<Number>[] arraySet;
+        @ExpectedConversion("{number}")
+        public Set<Integer> setInteger;
 
-		@ExpectedConversion("[table]")
-		Set<?>[] arrayRawSet;
+        @ExpectedConversion("{string}")
+        public Set<String> setString;
 
-		@ExpectedConversion("{[string]->{string{A,B,C,D}}}")
-		public Map<List<String>, Set<TestEnum>> mapListSet;
-	}
+        @ExpectedConversion("{string{A,B,C,D}}")
+        public Set<TestEnum> setEnum;
 
-	@Test
-	public void testGenericFields() {
-		for (Field f : TestFields.class.getFields()) {
-			ExpectedConversion ann = f.getAnnotation(ExpectedConversion.class);
-			final String name = f.getName();
-			Preconditions.checkNotNull(ann, "Field without annotation: " + name);
+        @ExpectedConversion("{{string{A,B,C,D}}}")
+        public Set<Set<TestEnum>> setNested;
 
-			final TypeClassifier qualifier = new TypeClassifier();
+        @ExpectedConversion("table")
+        public Set<?> setRaw;
 
-			final IScriptType qualified;
-			try {
-				qualified = qualifier.classifyType(f.getGenericType());
-			} catch (Exception e) {
-				throw new RuntimeException("Field " + name, e);
-			}
+        @ExpectedConversion("[[number]]")
+        List<Integer>[] arrayList;
 
-			Assert.assertEquals("Field " + name, ann.value(), qualified.describe());
-		}
-	}
+        @ExpectedConversion("[{number}]")
+        Set<Number>[] arraySet;
 
-	@Test
-	public void testArray() {
-		testQualifier("[number]", int[].class);
-		testQualifier("[boolean]", boolean[].class);
-		testQualifier("[boolean]", Boolean[].class);
-		testQualifier("table", Object[].class);
-		testQualifier("[[number]]", int[][].class);
-		testQualifier("[{a:number,b:string}]", BasicStruct[].class);
-		testQualifier("[[{a:number,b:string}]]", BasicStruct[][].class);
-	}
+        @ExpectedConversion("[table]")
+        Set<?>[] arrayRawSet;
 
-	@Test
-	public void testRaws() {
-		testQualifier("table", Map.class);
-		testQualifier("table", List.class);
-		testQualifier("table", Set.class);
-	}
+        @ExpectedConversion("{[string]->{string{A,B,C,D}}}")
+        public Map<List<String>, Set<TestEnum>> mapListSet;
+    }
+
+    @Test
+    public void testGenericFields() {
+        for (Field f : TestFields.class.getFields()) {
+            ExpectedConversion ann = f.getAnnotation(ExpectedConversion.class);
+            final String name = f.getName();
+            Preconditions.checkNotNull(ann, "Field without annotation: " + name);
+
+            final TypeClassifier qualifier = new TypeClassifier();
+
+            final IScriptType qualified;
+            try {
+                qualified = qualifier.classifyType(f.getGenericType());
+            } catch (Exception e) {
+                throw new RuntimeException("Field " + name, e);
+            }
+
+            Assert.assertEquals("Field " + name, ann.value(), qualified.describe());
+        }
+    }
+
+    @Test
+    public void testArray() {
+        testQualifier("[number]", int[].class);
+        testQualifier("[boolean]", boolean[].class);
+        testQualifier("[boolean]", Boolean[].class);
+        testQualifier("table", Object[].class);
+        testQualifier("[[number]]", int[][].class);
+        testQualifier("[{a:number,b:string}]", BasicStruct[].class);
+        testQualifier("[[{a:number,b:string}]]", BasicStruct[][].class);
+    }
+
+    @Test
+    public void testRaws() {
+        testQualifier("table", Map.class);
+        testQualifier("table", List.class);
+        testQualifier("table", Set.class);
+    }
 }

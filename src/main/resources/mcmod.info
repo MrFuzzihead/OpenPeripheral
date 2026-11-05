@@ -1,21 +1,28 @@
-[
 {
-  "modid" : "OpenPeripheralCore",
-  "name" : "OpenPeripheralCore",
-  "version" : "${version}",
-  "url" : "http://www.openmods.info",
-  "credits" : "Everyone in #ComputerCraft, #OpenMods",
-  "authors": [
-    "Mikeemoo",
-    "boq",
-    "theoriginalbit",
-    "Foone",
-    "SinZ"
-  ],
-  "description": "Converts many blocks into ComputerCraft peripherals!",
-  "logoFile" : "",
-  "updateUrl" : "",
-  "parent" : "",
-  "screenshots": [
-  ]
-}]
+  "modListVersion": 2,
+  "modList": [{
+    "modid": "${modId}",
+    "name": "${modName}",
+    "description": "Converts many blocks into ComputerCraft peripherals!",
+    "version": "${modVersion}",
+    "mcversion": "${minecraftVersion}",
+    "url": "https://github.com/MrFuzzihead/https://github.com/MrFuzzihead/OpenPeripheral",
+    "updateUrl": "https://github.com/MrFuzzihead/https://github.com/MrFuzzihead/OpenPeripheral/releases/latest",
+    "authorList": [
+      "MrFuzzihead",
+      "Mikeemoo",
+      "boq",
+      "theoriginalbit",
+      "Foone",
+      "SinZ"
+    ],
+    "credits": "Made by austinv11, some ideas were taken from RichardG",
+    "logoFile": "",
+    "screenshots": [],
+    "parent": "",
+    "requiredMods": [],
+    "dependencies": [],
+    "dependants": [],
+    "useDependencyInformation": false
+  }]
+}

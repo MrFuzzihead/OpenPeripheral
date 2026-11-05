@@ -1,35 +1,36 @@
 package openperipheral.adapter.types;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+
 public class EnumeratedRange<T> implements IRange {
 
-	public final Set<T> values;
+    public final Set<T> values;
 
-	public EnumeratedRange(Collection<T> values) {
-		this.values = ImmutableSet.copyOf(values);
-	}
+    public EnumeratedRange(Collection<T> values) {
+        this.values = ImmutableSet.copyOf(values);
+    }
 
-	@Override
-	public String describe() {
-		List<String> returns = Lists.newArrayList();
-		for (T r : values)
-			returns.add(r.toString());
+    @Override
+    public String describe() {
+        List<String> returns = Lists.newArrayList();
+        for (T r : values) returns.add(r.toString());
 
-		return "{" + Joiner.on(',').join(returns) + "}";
-	}
+        return "{" + Joiner.on(',')
+            .join(returns) + "}";
+    }
 
-	public static <T> EnumeratedRange<T> create(Collection<T> values) {
-		return new EnumeratedRange<T>(values);
-	}
+    public static <T> EnumeratedRange<T> create(Collection<T> values) {
+        return new EnumeratedRange<T>(values);
+    }
 
-	public static <T> EnumeratedRange<T> create(T... values) {
-		return new EnumeratedRange<T>(Arrays.asList(values));
-	}
+    public static <T> EnumeratedRange<T> create(T... values) {
+        return new EnumeratedRange<T>(Arrays.asList(values));
+    }
 }

@@ -7,14 +7,14 @@ import openperipheral.interfaces.cc.wrappers.LuaObjectWrapper;
 
 public class AdapterFactoryWrapperCC implements IComputerCraftObjectsFactory {
 
-	@Override
-	public ILuaObject wrapObject(Object target) {
-		return LuaObjectWrapper.wrap(target);
-	}
+    @Override
+    public ILuaObject wrapObject(Object target) {
+        return LuaObjectWrapper.wrap(target);
+    }
 
-	@Override
-	public IPeripheral createPeripheral(Object target) {
-		return PeripheralProvider.createAdaptedPeripheralWrapped(target);
-	}
+    @Override
+    public IPeripheral createPeripheral(Object target) {
+        return PeripheralProvider.createAdaptedPeripheralWrapped(target);
+    }
 
 }

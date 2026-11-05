@@ -9,33 +9,36 @@ import openperipheral.api.adapter.IPeripheralAdapterRegistry;
 
 public class AdapterRegistryWrapper<T extends IAdapter> implements IAdapterRegistry<T> {
 
-	public static class Objects extends AdapterRegistryWrapper<IObjectAdapter> implements IObjectAdapterRegistry {
-		public Objects() {
-			super(AdapterRegistry.OBJECT_ADAPTERS);
-		}
-	}
+    public static class Objects extends AdapterRegistryWrapper<IObjectAdapter> implements IObjectAdapterRegistry {
 
-	public static class Peripherals extends AdapterRegistryWrapper<IPeripheralAdapter> implements IPeripheralAdapterRegistry {
-		public Peripherals() {
-			super(AdapterRegistry.PERIPHERAL_ADAPTERS);
-		}
-	}
+        public Objects() {
+            super(AdapterRegistry.OBJECT_ADAPTERS);
+        }
+    }
 
-	private final AdapterRegistry registry;
+    public static class Peripherals extends AdapterRegistryWrapper<IPeripheralAdapter>
+        implements IPeripheralAdapterRegistry {
 
-	public AdapterRegistryWrapper(AdapterRegistry registry) {
-		this.registry = registry;
-	}
+        public Peripherals() {
+            super(AdapterRegistry.PERIPHERAL_ADAPTERS);
+        }
+    }
 
-	@Override
-	public boolean register(T adapter) {
-		return registry.addAdapter(adapter);
-	}
+    private final AdapterRegistry registry;
 
-	@Override
-	@Deprecated
-	public void registerInline(Class<?> cls) {
-		// No longer in use!
-	}
+    public AdapterRegistryWrapper(AdapterRegistry registry) {
+        this.registry = registry;
+    }
+
+    @Override
+    public boolean register(T adapter) {
+        return registry.addAdapter(adapter);
+    }
+
+    @Override
+    @Deprecated
+    public void registerInline(Class<?> cls) {
+        // No longer in use!
+    }
 
 }

@@ -8,5 +8,6 @@ import dan200.computercraft.api.peripheral.IPeripheral;
  * This class is for ComputerCraft only.
  */
 public interface ICustomPeripheralProvider {
-	public IPeripheral createPeripheral(int side);
+
+    public IPeripheral createPeripheral(int side);
 }

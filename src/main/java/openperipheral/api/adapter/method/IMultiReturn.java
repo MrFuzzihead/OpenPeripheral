@@ -9,5 +9,6 @@ package openperipheral.api.adapter.method;
  *
  */
 public interface IMultiReturn {
-	public Object[] getObjects();
+
+    public Object[] getObjects();
 }

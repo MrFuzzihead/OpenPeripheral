@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
 import openperipheral.api.Constants;
 
 /**
@@ -12,8 +13,9 @@ import openperipheral.api.Constants;
 @Target({ ElementType.PACKAGE, ElementType.TYPE, ElementType.METHOD, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ExcludeArchitecture {
-	/**
-	 * Excluded architectures. See {@link Constants}.
-	 */
-	public String[] value();
+
+    /**
+     * Excluded architectures. See {@link Constants}.
+     */
+    public String[] value();
 }

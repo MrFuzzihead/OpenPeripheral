@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
 import openperipheral.api.adapter.IObjectAdapterRegistry;
 import openperipheral.api.adapter.IPeripheralAdapterRegistry;
 import openperipheral.api.architecture.cc.IComputerCraftObjectsFactory;
@@ -15,7 +16,8 @@ import openperipheral.api.peripheral.IPeripheralBlacklist;
 
 /**
  * This annotation is used to get implementation of API interfaces (subclasses of {@link IApiInterface}).
- * Static variables marked with this annotation will be filled with instance of requested API (defined by type of variable).
+ * Static variables marked with this annotation will be filled with instance of requested API (defined by type of
+ * variable).
  * Static, single parameter methods will be called with instance of requested API (defined by parameter of type).
  *
  * Most commonly used interfaces:

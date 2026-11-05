@@ -7,4 +7,5 @@ package openperipheral.api.adapter;
  * @see IObjectAdapterRegistry#register(IObjectAdapter)
  * @see IPeripheralAdapter
  */
-public interface IObjectAdapter extends IAdapter {}
+public interface IObjectAdapter extends IAdapter {
+}

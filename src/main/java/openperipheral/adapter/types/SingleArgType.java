@@ -1,47 +1,48 @@
 package openperipheral.adapter.types;
 
 import com.google.common.base.Preconditions;
+
 import openperipheral.api.adapter.IScriptType;
 import openperipheral.api.adapter.method.ArgType;
 
 public class SingleArgType implements IScriptType {
 
-	public static final SingleArgType TABLE = new SingleArgType(ArgType.TABLE);
-	public static final SingleArgType NUMBER = new SingleArgType(ArgType.NUMBER);
-	public static final SingleArgType VOID = new SingleArgType(ArgType.VOID);
-	public static final SingleArgType BOOLEAN = new SingleArgType(ArgType.BOOLEAN);
-	public static final SingleArgType STRING = new SingleArgType(ArgType.STRING);
-	public static final SingleArgType OBJECT = new SingleArgType(ArgType.OBJECT);
+    public static final SingleArgType TABLE = new SingleArgType(ArgType.TABLE);
+    public static final SingleArgType NUMBER = new SingleArgType(ArgType.NUMBER);
+    public static final SingleArgType VOID = new SingleArgType(ArgType.VOID);
+    public static final SingleArgType BOOLEAN = new SingleArgType(ArgType.BOOLEAN);
+    public static final SingleArgType STRING = new SingleArgType(ArgType.STRING);
+    public static final SingleArgType OBJECT = new SingleArgType(ArgType.OBJECT);
 
-	public final ArgType type;
+    public final ArgType type;
 
-	private SingleArgType(ArgType type) {
-		this.type = type;
-	}
+    private SingleArgType(ArgType type) {
+        this.type = type;
+    }
 
-	@Override
-	public String describe() {
-		return type.getName();
-	}
+    @Override
+    public String describe() {
+        return type.getName();
+    }
 
-	public static SingleArgType valueOf(ArgType type) {
-		Preconditions.checkNotNull(type);
-		switch (type) {
-			case BOOLEAN:
-				return BOOLEAN;
-			case NUMBER:
-				return NUMBER;
-			case OBJECT:
-				return OBJECT;
-			case STRING:
-				return STRING;
-			case TABLE:
-				return TABLE;
-			case VOID:
-				return VOID;
-			default:
-				return new SingleArgType(type);
-		}
-	}
+    public static SingleArgType valueOf(ArgType type) {
+        Preconditions.checkNotNull(type);
+        switch (type) {
+            case BOOLEAN:
+                return BOOLEAN;
+            case NUMBER:
+                return NUMBER;
+            case OBJECT:
+                return OBJECT;
+            case STRING:
+                return STRING;
+            case TABLE:
+                return TABLE;
+            case VOID:
+                return VOID;
+            default:
+                return new SingleArgType(type);
+        }
+    }
 
 }

@@ -2,34 +2,37 @@ package openperipheral.adapter;
 
 import java.util.List;
 import java.util.Set;
+
 import openperipheral.api.adapter.IScriptType;
 
 public interface IMethodDescription {
-	public interface IArgumentDescription {
-		public String name();
 
-		public IScriptType type();
+    public interface IArgumentDescription {
 
-		public String description();
+        public String name();
 
-		public boolean nullable();
+        public IScriptType type();
 
-		public boolean optional();
+        public String description();
 
-		public boolean variadic();
+        public boolean nullable();
 
-		public Set<String> attributes();
-	}
+        public boolean optional();
 
-	public String source();
+        public boolean variadic();
 
-	public List<String> getNames();
+        public Set<String> attributes();
+    }
 
-	public String description();
+    public String source();
 
-	public List<IArgumentDescription> arguments();
+    public List<String> getNames();
 
-	public IScriptType returnTypes();
+    public String description();
 
-	public Set<String> attributes();
+    public List<IArgumentDescription> arguments();
+
+    public IScriptType returnTypes();
+
+    public Set<String> attributes();
 }

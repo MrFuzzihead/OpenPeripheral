@@ -1,6 +1,7 @@
 package openperipheral.api.property;
 
 import java.lang.reflect.Field;
+
 import openperipheral.api.adapter.IndexedCallbackProperty;
 import openperipheral.api.adapter.IndexedProperty;
 
@@ -12,8 +13,8 @@ import openperipheral.api.adapter.IndexedProperty;
  */
 public interface IIndexedCustomProperty<K, V> {
 
-	public V get(Object owner, Field field, K key);
+    public V get(Object owner, Field field, K key);
 
-	public void set(Object owner, Field field, K key, V value);
+    public void set(Object owner, Field field, K key, V value);
 
 }

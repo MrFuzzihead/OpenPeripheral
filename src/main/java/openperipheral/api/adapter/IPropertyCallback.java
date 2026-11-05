@@ -9,7 +9,8 @@ import java.lang.reflect.Field;
  * @see CallbackProperty
  */
 public interface IPropertyCallback {
-	public void setField(Field field, Object value);
 
-	public Object getField(Field field);
+    public void setField(Field field, Object value);
+
+    public Object getField(Field field);
 }

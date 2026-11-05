@@ -9,7 +9,8 @@ import java.lang.annotation.Target;
  * Changes behavior of function to following:
  * <ol>
  * <li>call returns immediately with callbackId</li>
- * <li>method is scheduled for execution - either in main thread (default) or in helper thread (when marked with {@link Asynchronous})</li>
+ * <li>method is scheduled for execution - either in main thread (default) or in helper thread (when marked with
+ * {@link Asynchronous})</li>
  * <li>if function finished successful it pushes signal with:
  * <ol>
  * <li>id given in value of this annotation</li>
@@ -27,10 +28,12 @@ import java.lang.annotation.Target;
  * </li>
  * </ol>
  *
- * This allows to easily implement interfaces that require multiple synchronized calls in the same tick or long processing time.
+ * This allows to easily implement interfaces that require multiple synchronized calls in the same tick or long
+ * processing time.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE, ElementType.METHOD })
 public @interface ReturnSignal {
-	public String value() default "op_task_done";
+
+    public String value() default "op_task_done";
 }

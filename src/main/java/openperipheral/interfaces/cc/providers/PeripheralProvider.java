@@ -1,16 +1,19 @@
 package openperipheral.interfaces.cc.providers;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import dan200.computercraft.api.peripheral.IPeripheral;
-import dan200.computercraft.api.peripheral.IPeripheralProvider;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.Set;
+
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
+
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+
+import dan200.computercraft.api.peripheral.IPeripheral;
+import dan200.computercraft.api.peripheral.IPeripheralProvider;
 import openmods.Log;
 import openmods.reflection.ReflectionHelper;
 import openmods.utils.CachedFactory;
@@ -25,130 +28,140 @@ import openperipheral.interfaces.cc.wrappers.AdapterPeripheral;
 import openperipheral.interfaces.cc.wrappers.ProxyAdapterPeripheral;
 
 public class PeripheralProvider implements IPeripheralProvider {
-	private static final IPeripheralFactory<TileEntity> NULL_FACTORY = new IPeripheralFactory<TileEntity>() {
-		@Override
-		public IPeripheral getPeripheral(TileEntity obj, int side) {
-			return null;
-		}
-	};
 
-	private static final IPeripheralFactory<TileEntity> PROVIDER_ADAPTER = new SafePeripheralFactory() {
-		@Override
-		protected IPeripheral createPeripheral(TileEntity tile, int side) {
-			return ((ICustomPeripheralProvider)tile).createPeripheral(side);
-		}
-	};
+    private static final IPeripheralFactory<TileEntity> NULL_FACTORY = new IPeripheralFactory<TileEntity>() {
 
-	private static IPeripheralFactory<TileEntity> createDirectFactory(final IndexedMethodMap methods) {
-		return new SafePeripheralFactory() {
-			@Override
-			protected IPeripheral createPeripheral(TileEntity target, int side) {
-				return new AdapterPeripheral(methods, target);
-			}
-		};
-	}
+        @Override
+        public IPeripheral getPeripheral(TileEntity obj, int side) {
+            return null;
+        }
+    };
 
-	private static IPeripheralFactory<TileEntity> createProxyFactory(final IndexedMethodMap methods, Class<?> cls, Set<Class<?>> proxyClasses) {
-		final Set<Class<?>> interfaces = appendCommonInterfaces(proxyClasses);
-		final Constructor<? extends IPeripheral> ctor = getProxyConstructor(cls, interfaces);
-		ctor.setAccessible(true);
+    private static final IPeripheralFactory<TileEntity> PROVIDER_ADAPTER = new SafePeripheralFactory() {
 
-		return new SafePeripheralFactory() {
-			@Override
-			public IPeripheral createPeripheral(TileEntity tile, int side) throws Exception {
-				final InvocationHandler handler = new ProxyAdapterPeripheral(methods, tile);
-				return ctor.newInstance(handler);
-			}
-		};
-	}
+        @Override
+        protected IPeripheral createPeripheral(TileEntity tile, int side) {
+            return ((ICustomPeripheralProvider) tile).createPeripheral(side);
+        }
+    };
 
-	private static Set<Class<?>> appendCommonInterfaces(Set<Class<?>> proxyClasses) {
-		final Set<Class<?>> interfaces = Sets.newHashSet(proxyClasses);
-		interfaces.add(IPeripheral.class);
-		interfaces.add(IOpenPeripheral.class);
-		return interfaces;
-	}
+    private static IPeripheralFactory<TileEntity> createDirectFactory(final IndexedMethodMap methods) {
+        return new SafePeripheralFactory() {
 
-	private static Constructor<? extends IPeripheral> getProxyConstructor(Class<?> cls, final Set<Class<?>> interfaces) {
-		final Class<?>[] tmp = interfaces.toArray(new Class<?>[interfaces.size()]);
-		try {
-			@SuppressWarnings("unchecked")
-			Class<? extends IPeripheral> proxyCls = (Class<? extends IPeripheral>)Proxy.getProxyClass(cls.getClassLoader(), tmp);
-			return proxyCls.getConstructor(InvocationHandler.class);
-		} catch (Throwable t) {
-			throw new RuntimeException(String.format("Failed to create proxy class for %s", cls), t);
-		}
-	}
+            @Override
+            protected IPeripheral createPeripheral(TileEntity target, int side) {
+                return new AdapterPeripheral(methods, target);
+            }
+        };
+    }
 
-	private static IndexedMethodMap getMethodsForClass(Class<?> cls) {
-		return ModuleComputerCraft.PERIPHERAL_METHODS_FACTORY.getAdaptedClass(cls);
-	}
+    private static IPeripheralFactory<TileEntity> createProxyFactory(final IndexedMethodMap methods, Class<?> cls,
+        Set<Class<?>> proxyClasses) {
+        final Set<Class<?>> interfaces = appendCommonInterfaces(proxyClasses);
+        final Constructor<? extends IPeripheral> ctor = getProxyConstructor(cls, interfaces);
+        ctor.setAccessible(true);
 
-	private static final CachedFactory<Class<? extends TileEntity>, IPeripheralFactory<TileEntity>> ADAPTED_CLASSES = new CachedFactory<Class<? extends TileEntity>, IPeripheralFactory<TileEntity>>() {
-		@Override
-		protected IPeripheralFactory<TileEntity> create(Class<? extends TileEntity> targetCls) {
-			try {
-				if (IPeripheral.class.isAssignableFrom(targetCls)) return NULL_FACTORY;
-				if (ICustomPeripheralProvider.class.isAssignableFrom(targetCls)) return PROVIDER_ADAPTER;
-				if (TileEntityBlacklist.INSTANCE.isBlacklisted(targetCls)) return NULL_FACTORY;
+        return new SafePeripheralFactory() {
 
-				final IndexedMethodMap methods = getMethodsForClass(targetCls);
-				if (methods.isEmpty()) return NULL_FACTORY;
+            @Override
+            public IPeripheral createPeripheral(TileEntity tile, int side) throws Exception {
+                final InvocationHandler handler = new ProxyAdapterPeripheral(methods, tile);
+                return ctor.newInstance(handler);
+            }
+        };
+    }
 
-				final Set<Class<?>> proxyClasses = getProxyClasses(targetCls);
-				return proxyClasses.isEmpty()? createDirectFactory(methods) : createProxyFactory(methods, targetCls, proxyClasses);
-			} catch (Exception e) {
-				Log.warn(e, "Failed to create factory for %s", targetCls);
-				return SafePeripheralFactory.BROKEN_FACTORY;
-			}
-		}
-	};
+    private static Set<Class<?>> appendCommonInterfaces(Set<Class<?>> proxyClasses) {
+        final Set<Class<?>> interfaces = Sets.newHashSet(proxyClasses);
+        interfaces.add(IPeripheral.class);
+        interfaces.add(IOpenPeripheral.class);
+        return interfaces;
+    }
 
-	private static IPeripheralFactory<TileEntity> getFactoryForClass(Class<? extends TileEntity> teClass) {
-		return ADAPTED_CLASSES.getOrCreate(teClass);
-	}
+    private static Constructor<? extends IPeripheral> getProxyConstructor(Class<?> cls,
+        final Set<Class<?>> interfaces) {
+        final Class<?>[] tmp = interfaces.toArray(new Class<?>[interfaces.size()]);
+        try {
+            @SuppressWarnings("unchecked")
+            Class<? extends IPeripheral> proxyCls = (Class<? extends IPeripheral>) Proxy
+                .getProxyClass(cls.getClassLoader(), tmp);
+            return proxyCls.getConstructor(InvocationHandler.class);
+        } catch (Throwable t) {
+            throw new RuntimeException(String.format("Failed to create proxy class for %s", cls), t);
+        }
+    }
 
-	public static IPeripheral createAdaptedPeripheralWrapped(Object target) {
-		Preconditions.checkNotNull(target, "Null target");
-		try {
-			return createAdaptedPeripheral(target);
-		} catch (Throwable t) {
-			throw new GenerationFailedException(String.format("%s (%s)", target, target.getClass()), t);
-		}
-	}
+    private static IndexedMethodMap getMethodsForClass(Class<?> cls) {
+        return ModuleComputerCraft.PERIPHERAL_METHODS_FACTORY.getAdaptedClass(cls);
+    }
 
-	private static Set<Class<?>> getProxyClasses(Class<?> target) {
-		ExposeInterface proxyAnn = target.getAnnotation(ExposeInterface.class);
-		if (proxyAnn == null) return ImmutableSet.of();
+    private static final CachedFactory<Class<? extends TileEntity>, IPeripheralFactory<TileEntity>> ADAPTED_CLASSES = new CachedFactory<Class<? extends TileEntity>, IPeripheralFactory<TileEntity>>() {
 
-		Set<Class<?>> implemented = ReflectionHelper.getAllInterfaces(target);
-		Set<Class<?>> whitelist = ImmutableSet.copyOf(proxyAnn.value());
-		Set<Class<?>> proxied = Sets.intersection(implemented, whitelist);
+        @Override
+        protected IPeripheralFactory<TileEntity> create(Class<? extends TileEntity> targetCls) {
+            try {
+                if (IPeripheral.class.isAssignableFrom(targetCls)) return NULL_FACTORY;
+                if (ICustomPeripheralProvider.class.isAssignableFrom(targetCls)) return PROVIDER_ADAPTER;
+                if (TileEntityBlacklist.INSTANCE.isBlacklisted(targetCls)) return NULL_FACTORY;
 
-		return ImmutableSet.copyOf(proxied);
-	}
+                final IndexedMethodMap methods = getMethodsForClass(targetCls);
+                if (methods.isEmpty()) return NULL_FACTORY;
 
-	public static IPeripheral createAdaptedPeripheral(Object target) {
-		final Class<?> targetClass = target.getClass();
-		final IndexedMethodMap methods = getMethodsForClass(targetClass);
-		if (methods.isEmpty()) return null;
+                final Set<Class<?>> proxyClasses = getProxyClasses(targetCls);
+                return proxyClasses.isEmpty() ? createDirectFactory(methods)
+                    : createProxyFactory(methods, targetCls, proxyClasses);
+            } catch (Exception e) {
+                Log.warn(e, "Failed to create factory for %s", targetCls);
+                return SafePeripheralFactory.BROKEN_FACTORY;
+            }
+        }
+    };
 
-		final Set<Class<?>> proxied = getProxyClasses(targetClass);
-		if (proxied.isEmpty()) return new AdapterPeripheral(methods, target);
+    private static IPeripheralFactory<TileEntity> getFactoryForClass(Class<? extends TileEntity> teClass) {
+        return ADAPTED_CLASSES.getOrCreate(teClass);
+    }
 
-		final Set<Class<?>> allImplemented = appendCommonInterfaces(proxied);
-		final InvocationHandler handler = new ProxyAdapterPeripheral(methods, target);
-		final Class<?>[] interfaces = allImplemented.toArray(new Class<?>[allImplemented.size()]);
-		return (IPeripheral)Proxy.newProxyInstance(targetClass.getClassLoader(), interfaces, handler);
-	}
+    public static IPeripheral createAdaptedPeripheralWrapped(Object target) {
+        Preconditions.checkNotNull(target, "Null target");
+        try {
+            return createAdaptedPeripheral(target);
+        } catch (Throwable t) {
+            throw new GenerationFailedException(String.format("%s (%s)", target, target.getClass()), t);
+        }
+    }
 
-	@Override
-	public IPeripheral getPeripheral(World world, int x, int y, int z, int side) {
-		final TileEntity te = world.getTileEntity(x, y, z);
-		if (te == null) return null;
+    private static Set<Class<?>> getProxyClasses(Class<?> target) {
+        ExposeInterface proxyAnn = target.getAnnotation(ExposeInterface.class);
+        if (proxyAnn == null) return ImmutableSet.of();
 
-		final IPeripheralFactory<TileEntity> factory = getFactoryForClass(te.getClass());
-		final IPeripheral peripheral = factory.getPeripheral(te, side);
-		return peripheral;
-	}
+        Set<Class<?>> implemented = ReflectionHelper.getAllInterfaces(target);
+        Set<Class<?>> whitelist = ImmutableSet.copyOf(proxyAnn.value());
+        Set<Class<?>> proxied = Sets.intersection(implemented, whitelist);
+
+        return ImmutableSet.copyOf(proxied);
+    }
+
+    public static IPeripheral createAdaptedPeripheral(Object target) {
+        final Class<?> targetClass = target.getClass();
+        final IndexedMethodMap methods = getMethodsForClass(targetClass);
+        if (methods.isEmpty()) return null;
+
+        final Set<Class<?>> proxied = getProxyClasses(targetClass);
+        if (proxied.isEmpty()) return new AdapterPeripheral(methods, target);
+
+        final Set<Class<?>> allImplemented = appendCommonInterfaces(proxied);
+        final InvocationHandler handler = new ProxyAdapterPeripheral(methods, target);
+        final Class<?>[] interfaces = allImplemented.toArray(new Class<?>[allImplemented.size()]);
+        return (IPeripheral) Proxy.newProxyInstance(targetClass.getClassLoader(), interfaces, handler);
+    }
+
+    @Override
+    public IPeripheral getPeripheral(World world, int x, int y, int z, int side) {
+        final TileEntity te = world.getTileEntity(x, y, z);
+        if (te == null) return null;
+
+        final IPeripheralFactory<TileEntity> factory = getFactoryForClass(te.getClass());
+        final IPeripheral peripheral = factory.getPeripheral(te, side);
+        return peripheral;
+    }
 }
