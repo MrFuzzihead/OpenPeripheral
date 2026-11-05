@@ -8,7 +8,8 @@ import openperipheral.api.architecture.IAttachable;
  * This class is for ComputerCraft only. For generic interface use {@link IAttachable}
  */
 public interface IComputerCraftAttachable {
-	public void addComputer(IComputerAccess machine);
 
-	public void removeComputer(IComputerAccess machine);
+    public void addComputer(IComputerAccess machine);
+
+    public void removeComputer(IComputerAccess machine);
 }

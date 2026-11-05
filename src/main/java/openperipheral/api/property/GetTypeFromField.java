@@ -9,4 +9,5 @@ import openperipheral.api.adapter.IndexedCallbackProperty;
  * @see IndexedCallbackProperty
  * @see CallbackProperty
  */
-public final class GetTypeFromField {}
+public final class GetTypeFromField {
+}

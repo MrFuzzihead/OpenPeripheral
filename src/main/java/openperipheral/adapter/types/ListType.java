@@ -4,15 +4,15 @@ import openperipheral.api.adapter.IScriptType;
 
 public class ListType implements IScriptType {
 
-	public final IScriptType componentType;
+    public final IScriptType componentType;
 
-	public ListType(IScriptType componentType) {
-		this.componentType = componentType;
-	}
+    public ListType(IScriptType componentType) {
+        this.componentType = componentType;
+    }
 
-	@Override
-	public String describe() {
-		return "[" + componentType.describe() + "]";
-	}
+    @Override
+    public String describe() {
+        return "[" + componentType.describe() + "]";
+    }
 
 }

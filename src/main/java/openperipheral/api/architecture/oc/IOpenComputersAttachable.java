@@ -8,7 +8,8 @@ import openperipheral.api.architecture.IAttachable;
  * This class is for OpenComputers only. For generic interface use {@link IAttachable}
  */
 public interface IOpenComputersAttachable {
-	public void onConnect(Node node);
 
-	public void onDisconnect(Node node);
+    public void onConnect(Node node);
+
+    public void onDisconnect(Node node);
 }

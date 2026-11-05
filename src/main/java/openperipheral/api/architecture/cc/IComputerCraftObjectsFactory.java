@@ -11,13 +11,13 @@ import openperipheral.api.adapter.GenerationFailedException;
  */
 public interface IComputerCraftObjectsFactory extends IApiInterface {
 
-	/**
-	 * @throws GenerationFailedException
-	 */
-	public ILuaObject wrapObject(Object target);
+    /**
+     * @throws GenerationFailedException
+     */
+    public ILuaObject wrapObject(Object target);
 
-	/**
-	 * @throws GenerationFailedException
-	 */
-	public IPeripheral createPeripheral(Object target);
+    /**
+     * @throws GenerationFailedException
+     */
+    public IPeripheral createPeripheral(Object target);
 }

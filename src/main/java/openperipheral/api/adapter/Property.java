@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
 import openperipheral.api.adapter.method.ArgType;
 
 /**
@@ -16,34 +17,35 @@ import openperipheral.api.adapter.method.ArgType;
 @Target(ElementType.FIELD)
 public @interface Property {
 
-	/**
-	 * Type of setter parameter and getter result. Used only for documentation
-	 */
-	public ArgType type() default ArgType.AUTO;
+    /**
+     * Type of setter parameter and getter result. Used only for documentation
+     */
+    public ArgType type() default ArgType.AUTO;
 
-	/**
-	 * Field name used for naming get/set methods. If empty, original field name will be used.
-	 * First letter of name be capitalized, therefore for value {@code XyzZyx} accessors will be named {@code getXyzZyx} and {@code setXyzZyx}
-	 */
-	public String name() default "";
+    /**
+     * Field name used for naming get/set methods. If empty, original field name will be used.
+     * First letter of name be capitalized, therefore for value {@code XyzZyx} accessors will be named {@code getXyzZyx}
+     * and {@code setXyzZyx}
+     */
+    public String name() default "";
 
-	/**
-	 * Short description of getter
-	 */
-	public String getterDesc() default "";
+    /**
+     * Short description of getter
+     */
+    public String getterDesc() default "";
 
-	/**
-	 * Short description of setter
-	 */
-	public String setterDesc() default "";
+    /**
+     * Short description of setter
+     */
+    public String setterDesc() default "";
 
-	/**
-	 * If true, only getter will be generated
-	 */
-	public boolean readOnly() default false;
+    /**
+     * If true, only getter will be generated
+     */
+    public boolean readOnly() default false;
 
-	/**
-	 * Does setter accept null values?
-	 */
-	public boolean nullable() default false;
+    /**
+     * Does setter accept null values?
+     */
+    public boolean nullable() default false;
 }

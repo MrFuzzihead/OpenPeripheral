@@ -1,41 +1,43 @@
 package openperipheral.adapter.composed;
 
-import com.google.common.collect.ImmutableMap;
 import java.util.Map;
+
+import com.google.common.collect.ImmutableMap;
+
 import openperipheral.adapter.IMethodExecutor;
 
 public class NamedMethodMap implements IMethodMap {
 
-	private final Map<String, IMethodExecutor> methods;
+    private final Map<String, IMethodExecutor> methods;
 
-	private final String[] methodNames;
+    private final String[] methodNames;
 
-	public NamedMethodMap(Map<String, IMethodExecutor> methods) {
-		this.methods = ImmutableMap.copyOf(methods);
-		this.methodNames = methods.keySet().toArray(new String[methods.size()]);
-	}
+    public NamedMethodMap(Map<String, IMethodExecutor> methods) {
+        this.methods = ImmutableMap.copyOf(methods);
+        this.methodNames = methods.keySet()
+            .toArray(new String[methods.size()]);
+    }
 
-	public String[] getMethodNames() {
-		return methodNames;
-	}
+    public String[] getMethodNames() {
+        return methodNames;
+    }
 
-	public IMethodExecutor getMethod(String name) {
-		return methods.get(name);
-	}
+    public IMethodExecutor getMethod(String name) {
+        return methods.get(name);
+    }
 
-	@Override
-	public boolean isEmpty() {
-		return methods.isEmpty();
-	}
+    @Override
+    public boolean isEmpty() {
+        return methods.isEmpty();
+    }
 
-	@Override
-	public int size() {
-		return methods.size();
-	}
+    @Override
+    public int size() {
+        return methods.size();
+    }
 
-	@Override
-	public void visitMethods(IMethodVisitor visitor) {
-		for (Map.Entry<String, IMethodExecutor> e : methods.entrySet())
-			visitor.visit(e.getKey(), e.getValue());
-	}
+    @Override
+    public void visitMethods(IMethodVisitor visitor) {
+        for (Map.Entry<String, IMethodExecutor> e : methods.entrySet()) visitor.visit(e.getKey(), e.getValue());
+    }
 }

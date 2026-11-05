@@ -1,9 +1,11 @@
 package openperipheral.adapter;
 
-import com.google.common.collect.Sets;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import java.util.Locale;
 import java.util.Set;
+
+import com.google.common.collect.Sets;
+
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import openmods.Log;
 import openmods.config.properties.ConfigurationChange;
 import openperipheral.Config;
@@ -12,51 +14,51 @@ import openperipheral.api.peripheral.Ignore;
 
 public class TileEntityBlacklist implements IPeripheralBlacklist {
 
-	public static final TileEntityBlacklist INSTANCE = new TileEntityBlacklist();
+    public static final TileEntityBlacklist INSTANCE = new TileEntityBlacklist();
 
-	private final Set<String> imcBlacklist = Sets.newHashSet();
+    private final Set<String> imcBlacklist = Sets.newHashSet();
 
-	private Set<String> fullBlacklist = Sets.newHashSet();
+    private Set<String> fullBlacklist = Sets.newHashSet();
 
-	@SubscribeEvent
-	public void onConfigChange(ConfigurationChange evt) {
-		if (evt.check("integration", "disableClasses")) {
-			fullBlacklist = Sets.newHashSet(imcBlacklist);
-			for (String cls : Config.teBlacklist)
-				fullBlacklist.add(cls.toLowerCase(Locale.ENGLISH));
-		}
-	}
+    @SubscribeEvent
+    public void onConfigChange(ConfigurationChange evt) {
+        if (evt.check("integration", "disableClasses")) {
+            fullBlacklist = Sets.newHashSet(imcBlacklist);
+            for (String cls : Config.teBlacklist) fullBlacklist.add(cls.toLowerCase(Locale.ENGLISH));
+        }
+    }
 
-	@Override
-	public boolean isBlacklisted(Class<?> teClass) {
-		final String teClassName = teClass.getName().toLowerCase(Locale.ENGLISH);
-		if (fullBlacklist.contains(teClassName)) return true;
+    @Override
+    public boolean isBlacklisted(Class<?> teClass) {
+        final String teClassName = teClass.getName()
+            .toLowerCase(Locale.ENGLISH);
+        if (fullBlacklist.contains(teClassName)) return true;
 
-		if (teClass.isAnnotationPresent(Ignore.class)) {
-			fullBlacklist.add(teClassName);
-			return true;
-		}
+        if (teClass.isAnnotationPresent(Ignore.class)) {
+            fullBlacklist.add(teClassName);
+            return true;
+        }
 
-		try {
-			teClass.getField("OPENPERIPHERAL_IGNORE");
-			fullBlacklist.add(teClassName);
-			return true;
-		} catch (NoSuchFieldException e) {
-			// uff, we are not ignored
-		} catch (Throwable t) {
-			Log.warn(t, "Class %s doesn't cooperate", teClass);
-		}
+        try {
+            teClass.getField("OPENPERIPHERAL_IGNORE");
+            fullBlacklist.add(teClassName);
+            return true;
+        } catch (NoSuchFieldException e) {
+            // uff, we are not ignored
+        } catch (Throwable t) {
+            Log.warn(t, "Class %s doesn't cooperate", teClass);
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	@Override
-	public void addToBlacklist(String className) {
-		imcBlacklist.add(className.toLowerCase(Locale.ENGLISH));
-	}
+    @Override
+    public void addToBlacklist(String className) {
+        imcBlacklist.add(className.toLowerCase(Locale.ENGLISH));
+    }
 
-	@Override
-	public void addToBlacklist(Class<?> cls) {
-		addToBlacklist(cls.getName());
-	}
+    @Override
+    public void addToBlacklist(Class<?> cls) {
+        addToBlacklist(cls.getName());
+    }
 }

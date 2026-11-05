@@ -7,10 +7,9 @@ import openperipheral.Config;
 
 public class ComputerCraftChecker implements IArchitecturePredicate {
 
-	@Override
-	public boolean isEnabled() {
-		return Config.interfaceComputerCraft
-				&& Loader.isModLoaded(Mods.COMPUTERCRAFT);
-	}
+    @Override
+    public boolean isEnabled() {
+        return Config.interfaceComputerCraft && Loader.isModLoaded(Mods.COMPUTERCRAFT);
+    }
 
 }

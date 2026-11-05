@@ -11,18 +11,19 @@ import openperipheral.api.architecture.oc.IOpenComputersObjectsFactory;
  * @see IComputerCraftObjectsFactory
  */
 public class GenerationFailedException extends RuntimeException {
-	private static final long serialVersionUID = 1L;
 
-	public GenerationFailedException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    private static final long serialVersionUID = 1L;
 
-	public GenerationFailedException(String message) {
-		super(message);
-	}
+    public GenerationFailedException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-	public GenerationFailedException(Throwable cause) {
-		super(cause);
-	}
+    public GenerationFailedException(String message) {
+        super(message);
+    }
+
+    public GenerationFailedException(Throwable cause) {
+        super(cause);
+    }
 
 }

@@ -11,13 +11,13 @@ import openperipheral.api.adapter.GenerationFailedException;
  */
 public interface IOpenComputersObjectsFactory extends IApiInterface {
 
-	/**
-	 * @throws GenerationFailedException
-	 */
-	public Value wrapObject(Object target);
+    /**
+     * @throws GenerationFailedException
+     */
+    public Value wrapObject(Object target);
 
-	/**
-	 * @throws GenerationFailedException
-	 */
-	public ManagedEnvironment createPeripheral(Object target);
+    /**
+     * @throws GenerationFailedException
+     */
+    public ManagedEnvironment createPeripheral(Object target);
 }

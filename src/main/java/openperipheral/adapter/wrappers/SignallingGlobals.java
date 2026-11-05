@@ -6,42 +6,46 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import openperipheral.Config;
 
 public class SignallingGlobals {
 
-	private static class SimpleThreadFactory implements ThreadFactory {
-		private static final String PREFIX = "OP-signalling";
-		private final ThreadGroup group;
-		private final AtomicInteger threadNumber = new AtomicInteger(1);
+    private static class SimpleThreadFactory implements ThreadFactory {
 
-		private SimpleThreadFactory() {
-			group = new ThreadGroup(PREFIX);
-		}
+        private static final String PREFIX = "OP-signalling";
+        private final ThreadGroup group;
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
 
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread t = new Thread(group, r, PREFIX + "-" + threadNumber.getAndIncrement());
-			if (t.isDaemon()) t.setDaemon(false);
-			return t;
-		}
-	}
+        private SimpleThreadFactory() {
+            group = new ThreadGroup(PREFIX);
+        }
 
-	public static final SignallingGlobals instance = new SignallingGlobals();
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r, PREFIX + "-" + threadNumber.getAndIncrement());
+            if (t.isDaemon()) t.setDaemon(false);
+            return t;
+        }
+    }
 
-	private final ExecutorService threadPool = new ThreadPoolExecutor(0,
-			Config.signallingPoolSize,
-			60L, TimeUnit.SECONDS,
-			new SynchronousQueue<Runnable>(),
-			new SimpleThreadFactory());
+    public static final SignallingGlobals instance = new SignallingGlobals();
 
-	private final AtomicInteger callbackCounter = new AtomicInteger();
+    private final ExecutorService threadPool = new ThreadPoolExecutor(
+        0,
+        Config.signallingPoolSize,
+        60L,
+        TimeUnit.SECONDS,
+        new SynchronousQueue<Runnable>(),
+        new SimpleThreadFactory());
 
-	public int nextCallbackId() {
-		return callbackCounter.getAndIncrement();
-	}
+    private final AtomicInteger callbackCounter = new AtomicInteger();
 
-	public void scheduleTask(Runnable runnable) {
-		threadPool.execute(runnable);
-	}
+    public int nextCallbackId() {
+        return callbackCounter.getAndIncrement();
+    }
+
+    public void scheduleTask(Runnable runnable) {
+        threadPool.execute(runnable);
+    }
 }

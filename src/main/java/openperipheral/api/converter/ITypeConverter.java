@@ -1,3 +1,4 @@
 package openperipheral.api.converter;
 
-public interface ITypeConverter extends IOutboundTypeConverter, IInboundTypeConverter {}
+public interface ITypeConverter extends IOutboundTypeConverter, IInboundTypeConverter {
+}

@@ -10,463 +10,472 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import openperipheral.api.converter.IConverter;
-import openperipheral.converter.inbound.ConverterArrayInbound;
-import openperipheral.converter.inbound.ConverterListInbound;
-import openperipheral.converter.inbound.ConverterMapInbound;
-import openperipheral.converter.inbound.ConverterSetInbound;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
+
+import openperipheral.api.converter.IConverter;
+import openperipheral.converter.inbound.ConverterArrayInbound;
+import openperipheral.converter.inbound.ConverterListInbound;
+import openperipheral.converter.inbound.ConverterMapInbound;
+import openperipheral.converter.inbound.ConverterSetInbound;
+
 public class ConverterTests {
 
-	private static final Object DUMMY = new Object();
+    private static final Object DUMMY = new Object();
 
-	public Map<String, Double> mapParametrized;
+    public Map<String, Double> mapParametrized;
 
-	private static ArgumentMatcher<Type> isClass(final Class<?> cls) {
-		return new ArgumentMatcher<Type>() {
-			@Override
-			public boolean matches(Object argument) {
-				return cls.equals(TypeToken.of((Type)argument).getRawType());
-			}
-		};
-	}
+    private static ArgumentMatcher<Type> isClass(final Class<?> cls) {
+        return new ArgumentMatcher<Type>() {
 
-	private static <T> Answer<T> returnConverterValue() {
-		return new Answer<T>() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public T answer(InvocationOnMock invocation) throws Throwable {
-				return (T)invocation.getArgumentAt(0, Object.class);
-			}
-		};
-	}
+            @Override
+            public boolean matches(Object argument) {
+                return cls.equals(
+                    TypeToken.of((Type) argument)
+                        .getRawType());
+            }
+        };
+    }
 
-	private Type getVarType(String name) {
-		try {
-			return getClass().getField(name).getGenericType();
-		} catch (Exception e) {
-			throw Throwables.propagate(e);
-		}
-	}
+    private static <T> Answer<T> returnConverterValue() {
+        return new Answer<T>() {
 
-	@Test
-	public void MapParametrizedTest() {
-		IConverter converter = mock(IConverter.class);
+            @SuppressWarnings("unchecked")
+            @Override
+            public T answer(InvocationOnMock invocation) throws Throwable {
+                return (T) invocation.getArgumentAt(0, Object.class);
+            }
+        };
+    }
 
-		ConverterMapInbound sut = new ConverterMapInbound();
+    private Type getVarType(String name) {
+        try {
+            return getClass().getField(name)
+                .getGenericType();
+        } catch (Exception e) {
+            throw Throwables.propagate(e);
+        }
+    }
 
-		Map<String, Double> obj = ImmutableMap.of("aaaa", 1.0, "bbbb", 2.0);
-		Type expected = getVarType("mapParametrized");
+    @Test
+    public void MapParametrizedTest() {
+        IConverter converter = mock(IConverter.class);
 
-		Object result = sut.toJava(converter, obj, expected);
-		Assert.assertTrue(result instanceof Map);
+        ConverterMapInbound sut = new ConverterMapInbound();
 
-		verify(converter).toJava("aaaa", (Type)String.class);
-		verify(converter).toJava("bbbb", (Type)String.class);
-		verify(converter).toJava(1.0, (Type)Double.class);
-		verify(converter).toJava(2.0, (Type)Double.class);
-	}
+        Map<String, Double> obj = ImmutableMap.of("aaaa", 1.0, "bbbb", 2.0);
+        Type expected = getVarType("mapParametrized");
 
-	public Map<?, ?> mapWildcard;
+        Object result = sut.toJava(converter, obj, expected);
+        Assert.assertTrue(result instanceof Map);
 
-	@Test
-	public void MapWildcardTest() {
-		IConverter converter = mock(IConverter.class);
+        verify(converter).toJava("aaaa", (Type) String.class);
+        verify(converter).toJava("bbbb", (Type) String.class);
+        verify(converter).toJava(1.0, (Type) Double.class);
+        verify(converter).toJava(2.0, (Type) Double.class);
+    }
 
-		ConverterMapInbound sut = new ConverterMapInbound();
+    public Map<?, ?> mapWildcard;
 
-		Map<?, ?> obj = ImmutableMap.of("aaaa", 1.0, "bbbb", 2.0);
-		Type expected = getVarType("mapWildcard");
+    @Test
+    public void MapWildcardTest() {
+        IConverter converter = mock(IConverter.class);
 
-		Object result = sut.toJava(converter, obj, expected);
-		Assert.assertTrue(result instanceof Map);
+        ConverterMapInbound sut = new ConverterMapInbound();
 
-		verify(converter).toJava(eq("aaaa"), argThat(isClass(Object.class)));
-		verify(converter).toJava(eq("bbbb"), argThat(isClass(Object.class)));
-		verify(converter).toJava(eq(1.0), argThat(isClass(Object.class)));
-		verify(converter).toJava(eq(2.0), argThat(isClass(Object.class)));
-	}
+        Map<?, ?> obj = ImmutableMap.of("aaaa", 1.0, "bbbb", 2.0);
+        Type expected = getVarType("mapWildcard");
 
-	public Map<? extends String, ? extends Double> mapBounded;
+        Object result = sut.toJava(converter, obj, expected);
+        Assert.assertTrue(result instanceof Map);
 
-	@Test
-	public void MapBoundedTest() {
-		IConverter converter = mock(IConverter.class);
+        verify(converter).toJava(eq("aaaa"), argThat(isClass(Object.class)));
+        verify(converter).toJava(eq("bbbb"), argThat(isClass(Object.class)));
+        verify(converter).toJava(eq(1.0), argThat(isClass(Object.class)));
+        verify(converter).toJava(eq(2.0), argThat(isClass(Object.class)));
+    }
 
-		ConverterMapInbound sut = new ConverterMapInbound();
+    public Map<? extends String, ? extends Double> mapBounded;
 
-		Map<?, ?> obj = ImmutableMap.of("aaaa", 1.0, "bbbb", 2.0);
-		Type expected = getVarType("mapBounded");
+    @Test
+    public void MapBoundedTest() {
+        IConverter converter = mock(IConverter.class);
 
-		Object result = sut.toJava(converter, obj, expected);
-		Assert.assertTrue(result instanceof Map);
+        ConverterMapInbound sut = new ConverterMapInbound();
 
-		verify(converter).toJava(eq("aaaa"), argThat(isClass(String.class)));
-		verify(converter).toJava(eq("bbbb"), argThat(isClass(String.class)));
-		verify(converter).toJava(eq(1.0), argThat(isClass(Double.class)));
-		verify(converter).toJava(eq(2.0), argThat(isClass(Double.class)));
-	}
+        Map<?, ?> obj = ImmutableMap.of("aaaa", 1.0, "bbbb", 2.0);
+        Type expected = getVarType("mapBounded");
 
-	public Map<Map<String, Double>, Double> mapNested;
+        Object result = sut.toJava(converter, obj, expected);
+        Assert.assertTrue(result instanceof Map);
 
-	@Test
-	public void MapNestedTest() {
-		IConverter converter = mock(IConverter.class);
+        verify(converter).toJava(eq("aaaa"), argThat(isClass(String.class)));
+        verify(converter).toJava(eq("bbbb"), argThat(isClass(String.class)));
+        verify(converter).toJava(eq(1.0), argThat(isClass(Double.class)));
+        verify(converter).toJava(eq(2.0), argThat(isClass(Double.class)));
+    }
 
-		ConverterMapInbound sut = new ConverterMapInbound();
+    public Map<Map<String, Double>, Double> mapNested;
 
-		Map<?, ?> obj = ImmutableMap.of("aaaa", 1.0, "bbbb", 2.0);
-		Type expected = getVarType("mapNested");
-		Type nested = getVarType("mapParametrized");
+    @Test
+    public void MapNestedTest() {
+        IConverter converter = mock(IConverter.class);
 
-		Object result = sut.toJava(converter, obj, expected);
-		Assert.assertTrue(result instanceof Map);
+        ConverterMapInbound sut = new ConverterMapInbound();
 
-		verify(converter).toJava(eq("aaaa"), eq(nested));
-		verify(converter).toJava(eq("bbbb"), eq(nested));
-		verify(converter).toJava(eq(1.0), argThat(isClass(Double.class)));
-		verify(converter).toJava(eq(2.0), argThat(isClass(Double.class)));
-	}
+        Map<?, ?> obj = ImmutableMap.of("aaaa", 1.0, "bbbb", 2.0);
+        Type expected = getVarType("mapNested");
+        Type nested = getVarType("mapParametrized");
 
-	@Test
-	public void MapRawTest() {
-		IConverter converter = mock(IConverter.class);
+        Object result = sut.toJava(converter, obj, expected);
+        Assert.assertTrue(result instanceof Map);
 
-		ConverterMapInbound sut = new ConverterMapInbound();
+        verify(converter).toJava(eq("aaaa"), eq(nested));
+        verify(converter).toJava(eq("bbbb"), eq(nested));
+        verify(converter).toJava(eq(1.0), argThat(isClass(Double.class)));
+        verify(converter).toJava(eq(2.0), argThat(isClass(Double.class)));
+    }
 
-		Map<?, ?> obj = ImmutableMap.of("aaaa", 1.0, "bbbb", 2.0);
+    @Test
+    public void MapRawTest() {
+        IConverter converter = mock(IConverter.class);
 
-		Object result = sut.toJava(converter, obj, Map.class);
-		Assert.assertTrue(result instanceof Map);
+        ConverterMapInbound sut = new ConverterMapInbound();
 
-		verify(converter).toJava(eq("aaaa"), argThat(isClass(Object.class)));
-		verify(converter).toJava(eq("bbbb"), argThat(isClass(Object.class)));
-		verify(converter).toJava(eq(1.0), argThat(isClass(Object.class)));
-		verify(converter).toJava(eq(2.0), argThat(isClass(Object.class)));
-	}
+        Map<?, ?> obj = ImmutableMap.of("aaaa", 1.0, "bbbb", 2.0);
 
-	@Test
-	public void MapNullTest() {
-		IConverter converter = mock(IConverter.class);
+        Object result = sut.toJava(converter, obj, Map.class);
+        Assert.assertTrue(result instanceof Map);
 
-		ConverterMapInbound sut = new ConverterMapInbound();
+        verify(converter).toJava(eq("aaaa"), argThat(isClass(Object.class)));
+        verify(converter).toJava(eq("bbbb"), argThat(isClass(Object.class)));
+        verify(converter).toJava(eq(1.0), argThat(isClass(Object.class)));
+        verify(converter).toJava(eq(2.0), argThat(isClass(Object.class)));
+    }
 
-		Map<String, Double> obj = Maps.newHashMap();
-		obj.put(null, 2.0);
-		obj.put("bbb", null);
+    @Test
+    public void MapNullTest() {
+        IConverter converter = mock(IConverter.class);
 
-		when(converter.toJava(notNull(), any(Type.class))).then(returnConverterValue());
+        ConverterMapInbound sut = new ConverterMapInbound();
 
-		Type expected = getVarType("mapParametrized");
+        Map<String, Double> obj = Maps.newHashMap();
+        obj.put(null, 2.0);
+        obj.put("bbb", null);
 
-		Object result = sut.toJava(converter, obj, expected);
-		Assert.assertTrue(result instanceof Map);
-		Assert.assertEquals(obj, result);
+        when(converter.toJava(notNull(), any(Type.class))).then(returnConverterValue());
 
-		verify(converter).toJava(eq(2.0), argThat(isClass(Double.class)));
-		verify(converter).toJava(eq("bbb"), argThat(isClass(String.class)));
-		verifyNoMoreInteractions(converter);
-	}
+        Type expected = getVarType("mapParametrized");
 
-	public List<String> listParametrized;
+        Object result = sut.toJava(converter, obj, expected);
+        Assert.assertTrue(result instanceof Map);
+        Assert.assertEquals(obj, result);
 
-	@Test
-	public void ListParametrizedTest() {
-		IConverter converter = mock(IConverter.class);
-		when(converter.toJava(anyString(), any(Type.class))).thenReturn(DUMMY);
+        verify(converter).toJava(eq(2.0), argThat(isClass(Double.class)));
+        verify(converter).toJava(eq("bbb"), argThat(isClass(String.class)));
+        verifyNoMoreInteractions(converter);
+    }
 
-		ConverterListInbound sut = new ConverterListInbound(1);
+    public List<String> listParametrized;
 
-		Map<Integer, String> obj = ImmutableMap.of(1, "a", 3, "b");
+    @Test
+    public void ListParametrizedTest() {
+        IConverter converter = mock(IConverter.class);
+        when(converter.toJava(anyString(), any(Type.class))).thenReturn(DUMMY);
 
-		Type expected = getVarType("listParametrized");
+        ConverterListInbound sut = new ConverterListInbound(1);
 
-		Object result = sut.toJava(converter, obj, expected);
+        Map<Integer, String> obj = ImmutableMap.of(1, "a", 3, "b");
 
-		Assert.assertTrue(result instanceof List);
-		final List<?> tmp = (List<?>)result;
-		Assert.assertEquals(3, tmp.size());
+        Type expected = getVarType("listParametrized");
 
-		Assert.assertEquals(DUMMY, tmp.get(0));
-		Assert.assertNull(tmp.get(1));
-		Assert.assertEquals(DUMMY, tmp.get(2));
+        Object result = sut.toJava(converter, obj, expected);
 
-		verify(converter).toJava("a", (Type)String.class);
-		verify(converter).toJava("b", (Type)String.class);
-	}
+        Assert.assertTrue(result instanceof List);
+        final List<?> tmp = (List<?>) result;
+        Assert.assertEquals(3, tmp.size());
 
-	public List<? extends Boolean> listBounded;
+        Assert.assertEquals(DUMMY, tmp.get(0));
+        Assert.assertNull(tmp.get(1));
+        Assert.assertEquals(DUMMY, tmp.get(2));
 
-	@Test
-	public void ListBoundedTest() {
-		IConverter converter = mock(IConverter.class);
-		when(converter.toJava(anyString(), any(Type.class))).thenReturn(DUMMY);
+        verify(converter).toJava("a", (Type) String.class);
+        verify(converter).toJava("b", (Type) String.class);
+    }
 
-		ConverterListInbound sut = new ConverterListInbound(0);
+    public List<? extends Boolean> listBounded;
 
-		Map<Integer, String> obj = ImmutableMap.of(0, "a", 2, "b");
+    @Test
+    public void ListBoundedTest() {
+        IConverter converter = mock(IConverter.class);
+        when(converter.toJava(anyString(), any(Type.class))).thenReturn(DUMMY);
 
-		Type expected = getVarType("listBounded");
+        ConverterListInbound sut = new ConverterListInbound(0);
 
-		Object result = sut.toJava(converter, obj, expected);
+        Map<Integer, String> obj = ImmutableMap.of(0, "a", 2, "b");
 
-		Assert.assertTrue(result instanceof List);
-		final List<?> tmp = (List<?>)result;
-		Assert.assertEquals(3, tmp.size());
+        Type expected = getVarType("listBounded");
 
-		Assert.assertEquals(DUMMY, tmp.get(0));
-		Assert.assertNull(tmp.get(1));
-		Assert.assertEquals(DUMMY, tmp.get(2));
+        Object result = sut.toJava(converter, obj, expected);
 
-		verify(converter).toJava(eq("a"), argThat(isClass(Boolean.class)));
-		verify(converter).toJava(eq("b"), argThat(isClass(Boolean.class)));
-	}
+        Assert.assertTrue(result instanceof List);
+        final List<?> tmp = (List<?>) result;
+        Assert.assertEquals(3, tmp.size());
 
-	@SuppressWarnings("rawtypes")
-	public List listRaw;
+        Assert.assertEquals(DUMMY, tmp.get(0));
+        Assert.assertNull(tmp.get(1));
+        Assert.assertEquals(DUMMY, tmp.get(2));
 
-	@Test
-	public void ListRawTest() {
-		IConverter converter = mock(IConverter.class);
-		when(converter.toJava(anyString(), any(Type.class))).thenReturn(DUMMY);
+        verify(converter).toJava(eq("a"), argThat(isClass(Boolean.class)));
+        verify(converter).toJava(eq("b"), argThat(isClass(Boolean.class)));
+    }
 
-		ConverterListInbound sut = new ConverterListInbound(0);
+    @SuppressWarnings("rawtypes")
+    public List listRaw;
 
-		Map<Integer, String> obj = ImmutableMap.of(0, "a", 1, "b");
+    @Test
+    public void ListRawTest() {
+        IConverter converter = mock(IConverter.class);
+        when(converter.toJava(anyString(), any(Type.class))).thenReturn(DUMMY);
 
-		Type expected = getVarType("listRaw");
+        ConverterListInbound sut = new ConverterListInbound(0);
 
-		Object result = sut.toJava(converter, obj, expected);
+        Map<Integer, String> obj = ImmutableMap.of(0, "a", 1, "b");
 
-		Assert.assertTrue(result instanceof List);
-		Assert.assertEquals(2, ((List<?>)result).size());
+        Type expected = getVarType("listRaw");
 
-		verify(converter).toJava(eq("a"), argThat(isClass(Object.class)));
-		verify(converter).toJava(eq("b"), argThat(isClass(Object.class)));
-	}
+        Object result = sut.toJava(converter, obj, expected);
 
-	@Test
-	public void ListNullTest() {
-		IConverter converter = mock(IConverter.class);
-		when(converter.toJava(anyString(), any(Type.class))).thenReturn(DUMMY);
+        Assert.assertTrue(result instanceof List);
+        Assert.assertEquals(2, ((List<?>) result).size());
 
-		ConverterListInbound sut = new ConverterListInbound(0);
+        verify(converter).toJava(eq("a"), argThat(isClass(Object.class)));
+        verify(converter).toJava(eq("b"), argThat(isClass(Object.class)));
+    }
 
-		Map<Integer, String> obj = Maps.newHashMap();
-		obj.put(0, "a");
-		obj.put(1, null);
-		obj.put(2, "b");
-		obj.put(3, null);
+    @Test
+    public void ListNullTest() {
+        IConverter converter = mock(IConverter.class);
+        when(converter.toJava(anyString(), any(Type.class))).thenReturn(DUMMY);
 
-		Type expected = getVarType("listParametrized");
+        ConverterListInbound sut = new ConverterListInbound(0);
 
-		Object result = sut.toJava(converter, obj, expected);
+        Map<Integer, String> obj = Maps.newHashMap();
+        obj.put(0, "a");
+        obj.put(1, null);
+        obj.put(2, "b");
+        obj.put(3, null);
 
-		Assert.assertTrue(result instanceof List);
-		final List<?> tmp = (List<?>)result;
-		Assert.assertEquals(4, tmp.size());
+        Type expected = getVarType("listParametrized");
 
-		Assert.assertEquals(DUMMY, tmp.get(0));
-		Assert.assertNull(tmp.get(1));
-		Assert.assertEquals(DUMMY, tmp.get(2));
-		Assert.assertNull(tmp.get(1));
+        Object result = sut.toJava(converter, obj, expected);
 
-		verify(converter).toJava("a", (Type)String.class);
-		verify(converter).toJava("b", (Type)String.class);
-		verifyNoMoreInteractions(converter);
-	}
+        Assert.assertTrue(result instanceof List);
+        final List<?> tmp = (List<?>) result;
+        Assert.assertEquals(4, tmp.size());
 
-	public Set<Double> setParametrized;
+        Assert.assertEquals(DUMMY, tmp.get(0));
+        Assert.assertNull(tmp.get(1));
+        Assert.assertEquals(DUMMY, tmp.get(2));
+        Assert.assertNull(tmp.get(1));
 
-	@Test
-	public void SetParametrizedTest() {
-		IConverter converter = mock(IConverter.class);
+        verify(converter).toJava("a", (Type) String.class);
+        verify(converter).toJava("b", (Type) String.class);
+        verifyNoMoreInteractions(converter);
+    }
 
-		ConverterSetInbound sut = new ConverterSetInbound();
+    public Set<Double> setParametrized;
 
-		Map<Double, String> obj = ImmutableMap.of(1.0, "a", 3.0, "b", 2.0, "");
+    @Test
+    public void SetParametrizedTest() {
+        IConverter converter = mock(IConverter.class);
 
-		Type expected = getVarType("setParametrized");
+        ConverterSetInbound sut = new ConverterSetInbound();
 
-		Object result = sut.toJava(converter, obj, expected);
+        Map<Double, String> obj = ImmutableMap.of(1.0, "a", 3.0, "b", 2.0, "");
 
-		Assert.assertTrue(result instanceof Set);
+        Type expected = getVarType("setParametrized");
 
-		verify(converter).toJava(1.0, (Type)Double.class);
-		verify(converter).toJava(3.0, (Type)Double.class);
-	}
+        Object result = sut.toJava(converter, obj, expected);
 
-	public Set<? extends Boolean> setBounded;
+        Assert.assertTrue(result instanceof Set);
 
-	@Test
-	public void SetBoundedTest() {
-		IConverter converter = mock(IConverter.class);
+        verify(converter).toJava(1.0, (Type) Double.class);
+        verify(converter).toJava(3.0, (Type) Double.class);
+    }
 
-		ConverterSetInbound sut = new ConverterSetInbound();
+    public Set<? extends Boolean> setBounded;
 
-		Map<Double, Boolean> obj = ImmutableMap.of(1.0, true, 2.0, true);
+    @Test
+    public void SetBoundedTest() {
+        IConverter converter = mock(IConverter.class);
 
-		Type expected = getVarType("setBounded");
+        ConverterSetInbound sut = new ConverterSetInbound();
 
-		Object result = sut.toJava(converter, obj, expected);
+        Map<Double, Boolean> obj = ImmutableMap.of(1.0, true, 2.0, true);
 
-		Assert.assertTrue(result instanceof Set);
+        Type expected = getVarType("setBounded");
 
-		verify(converter).toJava(eq(1.0), argThat(isClass(Boolean.class)));
-		verify(converter).toJava(eq(2.0), argThat(isClass(Boolean.class)));
-	}
+        Object result = sut.toJava(converter, obj, expected);
 
-	@SuppressWarnings("rawtypes")
-	public Set setRaw;
+        Assert.assertTrue(result instanceof Set);
 
-	@Test
-	public void SetRawTest() {
-		IConverter converter = mock(IConverter.class);
+        verify(converter).toJava(eq(1.0), argThat(isClass(Boolean.class)));
+        verify(converter).toJava(eq(2.0), argThat(isClass(Boolean.class)));
+    }
 
-		ConverterSetInbound sut = new ConverterSetInbound();
+    @SuppressWarnings("rawtypes")
+    public Set setRaw;
 
-		Map<String, Integer> obj = ImmutableMap.of("b", 1, "c", 2, "d", 3);
+    @Test
+    public void SetRawTest() {
+        IConverter converter = mock(IConverter.class);
 
-		Type expected = getVarType("setRaw");
+        ConverterSetInbound sut = new ConverterSetInbound();
 
-		Object result = sut.toJava(converter, obj, expected);
+        Map<String, Integer> obj = ImmutableMap.of("b", 1, "c", 2, "d", 3);
 
-		Assert.assertTrue(result instanceof Set);
+        Type expected = getVarType("setRaw");
 
-		verify(converter).toJava(eq("b"), argThat(isClass(Object.class)));
-		verify(converter).toJava(eq("c"), argThat(isClass(Object.class)));
-	}
+        Object result = sut.toJava(converter, obj, expected);
 
-	@Test
-	public void SetNullTest() {
-		IConverter converter = mock(IConverter.class);
+        Assert.assertTrue(result instanceof Set);
 
-		ConverterSetInbound sut = new ConverterSetInbound();
+        verify(converter).toJava(eq("b"), argThat(isClass(Object.class)));
+        verify(converter).toJava(eq("c"), argThat(isClass(Object.class)));
+    }
 
-		Map<Double, Object> obj = Maps.newHashMap();
-		obj.put(1.0, true);
-		obj.put(2.0, "hello");
-		obj.put(null, "hello");
+    @Test
+    public void SetNullTest() {
+        IConverter converter = mock(IConverter.class);
 
-		when(converter.toJava(notNull(), any(Type.class))).then(returnConverterValue());
+        ConverterSetInbound sut = new ConverterSetInbound();
 
-		Type expected = getVarType("setParametrized");
+        Map<Double, Object> obj = Maps.newHashMap();
+        obj.put(1.0, true);
+        obj.put(2.0, "hello");
+        obj.put(null, "hello");
 
-		Object result = sut.toJava(converter, obj, expected);
+        when(converter.toJava(notNull(), any(Type.class))).then(returnConverterValue());
 
-		Assert.assertTrue(result instanceof Set);
-		Set<?> tmp = (Set<?>)result;
-		Assert.assertTrue(tmp.contains(1.0));
-		Assert.assertTrue(tmp.contains(2.0));
-		Assert.assertTrue(tmp.contains(null));
+        Type expected = getVarType("setParametrized");
 
-		verify(converter).toJava(1.0, (Type)Double.class);
-		verify(converter).toJava(2.0, (Type)Double.class);
-		verifyNoMoreInteractions(converter);
-	}
+        Object result = sut.toJava(converter, obj, expected);
 
-	public static class Generic<T> {}
+        Assert.assertTrue(result instanceof Set);
+        Set<?> tmp = (Set<?>) result;
+        Assert.assertTrue(tmp.contains(1.0));
+        Assert.assertTrue(tmp.contains(2.0));
+        Assert.assertTrue(tmp.contains(null));
 
-	public Generic<Integer> genericParametrized;
+        verify(converter).toJava(1.0, (Type) Double.class);
+        verify(converter).toJava(2.0, (Type) Double.class);
+        verifyNoMoreInteractions(converter);
+    }
 
-	public Generic<Integer>[] genericParametrizedArray;
+    public static class Generic<T> {
+    }
 
-	@Test
-	public void ArrayPrimitiveTest() {
-		IConverter converter = mock(IConverter.class);
-		when(converter.toJava(anyString(), any(Type.class))).thenReturn(5);
+    public Generic<Integer> genericParametrized;
 
-		ConverterArrayInbound sut = new ConverterArrayInbound(1);
+    public Generic<Integer>[] genericParametrizedArray;
 
-		Map<Integer, String> obj = ImmutableMap.of(1, "a", 3, "b");
+    @Test
+    public void ArrayPrimitiveTest() {
+        IConverter converter = mock(IConverter.class);
+        when(converter.toJava(anyString(), any(Type.class))).thenReturn(5);
 
-		Type expected = int[].class;
+        ConverterArrayInbound sut = new ConverterArrayInbound(1);
 
-		Type component = int.class;
+        Map<Integer, String> obj = ImmutableMap.of(1, "a", 3, "b");
 
-		Object result = sut.toJava(converter, obj, expected);
+        Type expected = int[].class;
 
-		Assert.assertTrue(result instanceof int[]);
-		int[] tmp = (int[])result;
-		Assert.assertEquals(tmp.length, 3);
-		Assert.assertEquals(tmp[0], 5);
-		Assert.assertEquals(tmp[1], 0);
-		Assert.assertEquals(tmp[2], 5);
+        Type component = int.class;
 
-		verify(converter).toJava("a", component);
-		verify(converter).toJava("b", component);
-	}
+        Object result = sut.toJava(converter, obj, expected);
 
-	@Test
-	public void ArrayNullTest() {
-		IConverter converter = mock(IConverter.class);
-		ConverterArrayInbound sut = new ConverterArrayInbound(1);
+        Assert.assertTrue(result instanceof int[]);
+        int[] tmp = (int[]) result;
+        Assert.assertEquals(tmp.length, 3);
+        Assert.assertEquals(tmp[0], 5);
+        Assert.assertEquals(tmp[1], 0);
+        Assert.assertEquals(tmp[2], 5);
 
-		Map<Integer, Integer> obj = Maps.newHashMap();
-		obj.put(1, 5);
-		obj.put(2, null);
-		obj.put(3, 7);
-		obj.put(4, null);
+        verify(converter).toJava("a", component);
+        verify(converter).toJava("b", component);
+    }
 
-		when(converter.toJava(notNull(), any(Type.class))).then(returnConverterValue());
+    @Test
+    public void ArrayNullTest() {
+        IConverter converter = mock(IConverter.class);
+        ConverterArrayInbound sut = new ConverterArrayInbound(1);
 
-		Type expected = Integer[].class;
+        Map<Integer, Integer> obj = Maps.newHashMap();
+        obj.put(1, 5);
+        obj.put(2, null);
+        obj.put(3, 7);
+        obj.put(4, null);
 
-		Type component = Integer.class;
+        when(converter.toJava(notNull(), any(Type.class))).then(returnConverterValue());
 
-		Object result = sut.toJava(converter, obj, expected);
+        Type expected = Integer[].class;
 
-		Assert.assertTrue(result instanceof Integer[]);
-		Integer[] tmp = (Integer[])result;
-		Assert.assertEquals(tmp.length, 4);
-		Assert.assertEquals(tmp[0], Integer.valueOf(5));
-		Assert.assertNull(tmp[1]);
-		Assert.assertEquals(tmp[2], Integer.valueOf(7));
-		Assert.assertNull(tmp[3]);
+        Type component = Integer.class;
 
-		verify(converter).toJava(5, component);
-		verify(converter).toJava(7, component);
-		verifyNoMoreInteractions(converter);
-	}
+        Object result = sut.toJava(converter, obj, expected);
 
-	@Test
-	public void ArrayParametrizerTest() {
-		IConverter converter = mock(IConverter.class);
-		when(converter.toJava(anyString(), any(Type.class))).thenReturn(new Generic<Integer>());
+        Assert.assertTrue(result instanceof Integer[]);
+        Integer[] tmp = (Integer[]) result;
+        Assert.assertEquals(tmp.length, 4);
+        Assert.assertEquals(tmp[0], Integer.valueOf(5));
+        Assert.assertNull(tmp[1]);
+        Assert.assertEquals(tmp[2], Integer.valueOf(7));
+        Assert.assertNull(tmp[3]);
 
-		ConverterArrayInbound sut = new ConverterArrayInbound(1);
+        verify(converter).toJava(5, component);
+        verify(converter).toJava(7, component);
+        verifyNoMoreInteractions(converter);
+    }
 
-		Map<Integer, String> obj = ImmutableMap.of(1, "a", 3, "b");
+    @Test
+    public void ArrayParametrizerTest() {
+        IConverter converter = mock(IConverter.class);
+        when(converter.toJava(anyString(), any(Type.class))).thenReturn(new Generic<Integer>());
 
-		Type expected = getVarType("genericParametrizedArray");
+        ConverterArrayInbound sut = new ConverterArrayInbound(1);
 
-		Type component = getVarType("genericParametrized");
+        Map<Integer, String> obj = ImmutableMap.of(1, "a", 3, "b");
 
-		Object result = sut.toJava(converter, obj, expected);
+        Type expected = getVarType("genericParametrizedArray");
 
-		Assert.assertTrue(result instanceof Generic[]);
+        Type component = getVarType("genericParametrized");
 
-		Generic<?>[] tmp = (Generic[])result;
-		Assert.assertEquals(tmp.length, 3);
-		Assert.assertNotNull(tmp[0]);
-		Assert.assertNull(tmp[1]);
-		Assert.assertNotNull(tmp[2]);
+        Object result = sut.toJava(converter, obj, expected);
 
-		verify(converter).toJava("a", component);
-		verify(converter).toJava("b", component);
-	}
+        Assert.assertTrue(result instanceof Generic[]);
+
+        Generic<?>[] tmp = (Generic[]) result;
+        Assert.assertEquals(tmp.length, 3);
+        Assert.assertNotNull(tmp[0]);
+        Assert.assertNull(tmp[1]);
+        Assert.assertNotNull(tmp[2]);
+
+        verify(converter).toJava("a", component);
+        verify(converter).toJava("b", component);
+    }
 
 }

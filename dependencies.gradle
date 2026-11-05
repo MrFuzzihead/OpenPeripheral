@@ -38,4 +38,5 @@ dependencies {
 
     api("com.github.MrFuzzihead:Computercraft-Legacy:3.2.0:dev")
     api("com.github.GTNewHorizons:OpenModsLib:0.11.0:dev")
+    compileOnly("com.github.GTNewHorizons:OpenComputers:1.13.0-GTNH:dev")
 }

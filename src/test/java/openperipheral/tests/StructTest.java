@@ -3,12 +3,20 @@ package openperipheral.tests;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
 import openperipheral.api.converter.IConverter;
 import openperipheral.api.struct.ScriptStruct;
 import openperipheral.api.struct.ScriptStruct.Output;
@@ -17,660 +25,661 @@ import openperipheral.converter.StructHandlerProvider;
 import openperipheral.converter.StructHandlerProvider.IFieldHandler;
 import openperipheral.converter.StructHandlerProvider.IStructHandler;
 import openperipheral.converter.StructHandlerProvider.InvalidStructureException;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 public class StructTest {
 
-	@Mock
-	private IConverter converter;
+    @Mock
+    private IConverter converter;
 
-	private void setupOutboundConverter(Object input, Object output) {
-		when(converter.fromJava(input)).thenReturn(output);
-	}
+    private void setupOutboundConverter(Object input, Object output) {
+        when(converter.fromJava(input)).thenReturn(output);
+    }
 
-	private <T> void setupInboundConverter(Object input, Class<? extends T> expected, T output) {
-		when(converter.toJava(input, (Type)expected)).thenReturn(output);
-	}
+    private <T> void setupInboundConverter(Object input, Class<? extends T> expected, T output) {
+        when(converter.toJava(input, (Type) expected)).thenReturn(output);
+    }
 
-	private void verifyInboundConversion(Object input, Class<?> cls) {
-		verify(converter).toJava(input, (Type)cls);
-	}
+    private void verifyInboundConversion(Object input, Class<?> cls) {
+        verify(converter).toJava(input, (Type) cls);
+    }
 
-	private void verifyOutboundConversion(Object input) {
-		verify(converter).fromJava(input);
-	}
+    private void verifyOutboundConversion(Object input) {
+        verify(converter).fromJava(input);
+    }
 
-	private void assertInboundConversionFail(IStructHandler structConverter, Map<Object, Object> input, int indexOffset) {
-		try {
-			structConverter.toJava(converter, input, indexOffset);
-			Assert.fail("Exception not thrown");
-		} catch (RuntimeException e) {}
-	}
+    private void assertInboundConversionFail(IStructHandler structConverter, Map<Object, Object> input,
+        int indexOffset) {
+        try {
+            structConverter.toJava(converter, input, indexOffset);
+            Assert.fail("Exception not thrown");
+        } catch (RuntimeException e) {}
+    }
 
-	private void assertOutboundConversionFail(IStructHandler structConverter, Map<Object, Object> input, int indexOffset) {
-		try {
-			structConverter.toJava(converter, input, indexOffset);
-			Assert.fail("Exception not thrown");
-		} catch (RuntimeException e) {}
-	}
+    private void assertOutboundConversionFail(IStructHandler structConverter, Map<Object, Object> input,
+        int indexOffset) {
+        try {
+            structConverter.toJava(converter, input, indexOffset);
+            Assert.fail("Exception not thrown");
+        } catch (RuntimeException e) {}
+    }
 
-	public static final String SKIP_VALUE = "skip!";
+    public static final String SKIP_VALUE = "skip!";
 
-	@ScriptStruct
-	public static class SimpleStruct {
+    @ScriptStruct
+    public static class SimpleStruct {
 
-		@StructField
-		public String a;
+        @StructField
+        public String a;
 
-		@StructField
-		public int b;
+        @StructField
+        public int b;
 
-		public String skip = SKIP_VALUE;
-	}
+        public String skip = SKIP_VALUE;
+    }
 
-	@Test
-	public void testNamedOutboundConversion() {
-		final IStructHandler c = getConverter(SimpleStruct.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testNamedOutboundConversion() {
+        final IStructHandler c = getConverter(SimpleStruct.class);
+        verifyFieldOrder(c, "a", "b");
 
-		SimpleStruct struct = new SimpleStruct();
-		struct.a = "aaaa";
-		struct.b = 2;
+        SimpleStruct struct = new SimpleStruct();
+        struct.a = "aaaa";
+        struct.b = 2;
 
-		final String resultA = "ca";
-		setupOutboundConverter(struct.a, resultA);
+        final String resultA = "ca";
+        setupOutboundConverter(struct.a, resultA);
 
-		final String resultB = "cb";
-		setupOutboundConverter(struct.b, resultB);
+        final String resultB = "cb";
+        setupOutboundConverter(struct.b, resultB);
 
-		Map<?, ?> fromJava = c.fromJava(converter, struct, 0);
+        Map<?, ?> fromJava = c.fromJava(converter, struct, 0);
 
-		Map<Object, Object> result = Maps.newHashMap();
-		result.put("a", resultA);
-		result.put("b", resultB);
+        Map<Object, Object> result = Maps.newHashMap();
+        result.put("a", resultA);
+        result.put("b", resultB);
 
-		Assert.assertEquals(result, fromJava);
+        Assert.assertEquals(result, fromJava);
 
-		verifyOutboundConversion(struct.a);
-		verifyOutboundConversion(struct.b);
-	}
+        verifyOutboundConversion(struct.a);
+        verifyOutboundConversion(struct.b);
+    }
 
-	private static void verifyFieldOrder(IStructHandler c, String... fields) {
-		final List<String> names = Lists.newArrayList();
-		for (IFieldHandler handler : c.fields())
-			names.add(handler.name());
+    private static void verifyFieldOrder(IStructHandler c, String... fields) {
+        final List<String> names = Lists.newArrayList();
+        for (IFieldHandler handler : c.fields()) names.add(handler.name());
 
-		Assert.assertEquals(Arrays.asList(fields), names);
-	}
+        Assert.assertEquals(Arrays.asList(fields), names);
+    }
 
-	protected IStructHandler getConverter(Class<?> cls) {
-		StructHandlerProvider cache = new StructHandlerProvider();
-		IStructHandler c = cache.getHandler(cls);
-		return c;
-	}
+    protected IStructHandler getConverter(Class<?> cls) {
+        StructHandlerProvider cache = new StructHandlerProvider();
+        IStructHandler c = cache.getHandler(cls);
+        return c;
+    }
 
-	@Test
-	public void testNamedInboundConversion() {
-		final IStructHandler c = getConverter(SimpleStruct.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testNamedInboundConversion() {
+        final IStructHandler c = getConverter(SimpleStruct.class);
+        verifyFieldOrder(c, "a", "b");
 
-		final String inputA = "ca";
-		final String inputB = "zzzz";
+        final String inputA = "ca";
+        final String inputB = "zzzz";
 
-		Map<Object, Object> input = Maps.newHashMap();
-		input.put("a", inputA);
-		input.put("b", inputB);
+        Map<Object, Object> input = Maps.newHashMap();
+        input.put("a", inputA);
+        input.put("b", inputB);
 
-		final String resultA = "ca";
-		final int resultB = 2;
+        final String resultA = "ca";
+        final int resultB = 2;
 
-		setupInboundConverter(inputA, String.class, resultA);
-		setupInboundConverter(inputB, int.class, resultB);
+        setupInboundConverter(inputA, String.class, resultA);
+        setupInboundConverter(inputB, int.class, resultB);
 
-		Object o = c.toJava(converter, input, 1);
+        Object o = c.toJava(converter, input, 1);
 
-		verifyInboundConversion(inputA, String.class);
-		verifyInboundConversion(inputB, int.class);
+        verifyInboundConversion(inputA, String.class);
+        verifyInboundConversion(inputB, int.class);
 
-		Assert.assertTrue(o instanceof SimpleStruct);
+        Assert.assertTrue(o instanceof SimpleStruct);
 
-		SimpleStruct converted = (SimpleStruct)o;
+        SimpleStruct converted = (SimpleStruct) o;
 
-		Assert.assertEquals(resultA, converted.a);
-		Assert.assertEquals(resultB, converted.b);
-		Assert.assertEquals(SKIP_VALUE, converted.skip);
-	}
+        Assert.assertEquals(resultA, converted.a);
+        Assert.assertEquals(resultB, converted.b);
+        Assert.assertEquals(SKIP_VALUE, converted.skip);
+    }
 
-	@Test
-	public void testNamedInboundConversionExtraFields() {
-		final IStructHandler c = getConverter(SimpleStruct.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testNamedInboundConversionExtraFields() {
+        final IStructHandler c = getConverter(SimpleStruct.class);
+        verifyFieldOrder(c, "a", "b");
 
-		final String inputA = "ca";
-		final String inputB = "zzzz";
-		final String inputExtra = "!!!!";
+        final String inputA = "ca";
+        final String inputB = "zzzz";
+        final String inputExtra = "!!!!";
 
-		Map<Object, Object> input = Maps.newHashMap();
-		input.put("a", inputA);
-		input.put("b", inputB);
-		input.put("extra", inputExtra);
+        Map<Object, Object> input = Maps.newHashMap();
+        input.put("a", inputA);
+        input.put("b", inputB);
+        input.put("extra", inputExtra);
 
-		final String resultA = "ca";
-		final int resultB = 2;
+        final String resultA = "ca";
+        final int resultB = 2;
 
-		setupInboundConverter(inputA, String.class, resultA);
-		setupInboundConverter(inputB, int.class, resultB);
+        setupInboundConverter(inputA, String.class, resultA);
+        setupInboundConverter(inputB, int.class, resultB);
 
-		assertInboundConversionFail(c, input, 3);
-	}
+        assertInboundConversionFail(c, input, 3);
+    }
 
-	@Test
-	public void testNamedInboundConversionInvalidKey() {
-		final IStructHandler c = getConverter(SimpleStruct.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testNamedInboundConversionInvalidKey() {
+        final IStructHandler c = getConverter(SimpleStruct.class);
+        verifyFieldOrder(c, "a", "b");
 
-		final String inputA = "ca";
-		final String inputB = "zzzz";
+        final String inputA = "ca";
+        final String inputB = "zzzz";
 
-		Map<Object, Object> input = Maps.newHashMap();
-		input.put('a', inputA);
-		input.put("b", inputB);
+        Map<Object, Object> input = Maps.newHashMap();
+        input.put('a', inputA);
+        input.put("b", inputB);
 
-		assertInboundConversionFail(c, input, 4);
-	}
+        assertInboundConversionFail(c, input, 4);
+    }
 
-	@Test
-	public void testNamedInboundConversionMissingFields() {
-		final IStructHandler c = getConverter(SimpleStruct.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testNamedInboundConversionMissingFields() {
+        final IStructHandler c = getConverter(SimpleStruct.class);
+        verifyFieldOrder(c, "a", "b");
 
-		final String inputA = "ca";
+        final String inputA = "ca";
 
-		Map<Object, Object> input = Maps.newHashMap();
-		input.put("a", inputA);
+        Map<Object, Object> input = Maps.newHashMap();
+        input.put("a", inputA);
 
-		final String resultA = "ca";
+        final String resultA = "ca";
 
-		setupInboundConverter(inputA, String.class, resultA);
+        setupInboundConverter(inputA, String.class, resultA);
 
-		assertInboundConversionFail(c, input, 5);
-	}
+        assertInboundConversionFail(c, input, 5);
+    }
 
-	@ScriptStruct
-	public static class SimpleStructOptional {
+    @ScriptStruct
+    public static class SimpleStructOptional {
 
-		@StructField(optional = true)
-		public String a = SKIP_VALUE;
+        @StructField(optional = true)
+        public String a = SKIP_VALUE;
 
-		@StructField
-		public int b;
-	}
+        @StructField
+        public int b;
+    }
 
-	@Test
-	public void testNamedInboundConversionOptionalFields() {
-		final IStructHandler c = getConverter(SimpleStructOptional.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testNamedInboundConversionOptionalFields() {
+        final IStructHandler c = getConverter(SimpleStructOptional.class);
+        verifyFieldOrder(c, "a", "b");
 
-		final String inputB = "ca";
+        final String inputB = "ca";
 
-		Map<Object, Object> input = Maps.newHashMap();
-		input.put("b", inputB);
+        Map<Object, Object> input = Maps.newHashMap();
+        input.put("b", inputB);
 
-		final int resultB = 12;
+        final int resultB = 12;
 
-		setupInboundConverter(inputB, int.class, resultB);
+        setupInboundConverter(inputB, int.class, resultB);
 
-		Object o = c.toJava(converter, input, 6);
+        Object o = c.toJava(converter, input, 6);
 
-		verifyInboundConversion(inputB, int.class);
+        verifyInboundConversion(inputB, int.class);
 
-		Assert.assertTrue(o instanceof SimpleStructOptional);
+        Assert.assertTrue(o instanceof SimpleStructOptional);
 
-		SimpleStructOptional converted = (SimpleStructOptional)o;
+        SimpleStructOptional converted = (SimpleStructOptional) o;
 
-		Assert.assertEquals(resultB, converted.b);
-		Assert.assertEquals(SKIP_VALUE, converted.a);
+        Assert.assertEquals(resultB, converted.b);
+        Assert.assertEquals(SKIP_VALUE, converted.a);
 
-	}
+    }
 
-	@ScriptStruct(defaultOutput = Output.TABLE)
-	public static class SimpleTableDefaultOrdering {
+    @ScriptStruct(defaultOutput = Output.TABLE)
+    public static class SimpleTableDefaultOrdering {
 
-		@StructField
-		public String a;
+        @StructField
+        public String a;
 
-		@StructField
-		public int b;
+        @StructField
+        public int b;
 
-		public String skip;
-	}
+        public String skip;
+    }
 
-	@Test
-	public void testDefaultOrderedOutboundConversionOneIndexed() {
-		final IStructHandler c = getConverter(SimpleTableDefaultOrdering.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testDefaultOrderedOutboundConversionOneIndexed() {
+        final IStructHandler c = getConverter(SimpleTableDefaultOrdering.class);
+        verifyFieldOrder(c, "a", "b");
 
-		SimpleTableDefaultOrdering struct = new SimpleTableDefaultOrdering();
-		struct.a = "aaaa";
-		struct.b = 2;
-		struct.skip = "zzzz";
+        SimpleTableDefaultOrdering struct = new SimpleTableDefaultOrdering();
+        struct.a = "aaaa";
+        struct.b = 2;
+        struct.skip = "zzzz";
 
-		final int resultA = 5;
-		setupOutboundConverter(struct.a, resultA);
+        final int resultA = 5;
+        setupOutboundConverter(struct.a, resultA);
 
-		final String resultB = "cb";
-		setupOutboundConverter(struct.b, resultB);
+        final String resultB = "cb";
+        setupOutboundConverter(struct.b, resultB);
 
-		Map<?, ?> fromJava = c.fromJava(converter, struct, 1);
+        Map<?, ?> fromJava = c.fromJava(converter, struct, 1);
 
-		Map<Object, Object> result = Maps.newHashMap();
-		result.put(1, resultA);
-		result.put(2, resultB);
+        Map<Object, Object> result = Maps.newHashMap();
+        result.put(1, resultA);
+        result.put(2, resultB);
 
-		Assert.assertEquals(result, fromJava);
+        Assert.assertEquals(result, fromJava);
 
-		verifyOutboundConversion(struct.a);
-		verifyOutboundConversion(struct.b);
-	}
+        verifyOutboundConversion(struct.a);
+        verifyOutboundConversion(struct.b);
+    }
 
-	@Test
-	public void testDefaultOrderedOutboundConversionZeroIndexed() {
-		final IStructHandler c = getConverter(SimpleTableDefaultOrdering.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testDefaultOrderedOutboundConversionZeroIndexed() {
+        final IStructHandler c = getConverter(SimpleTableDefaultOrdering.class);
+        verifyFieldOrder(c, "a", "b");
 
-		SimpleTableDefaultOrdering struct = new SimpleTableDefaultOrdering();
-		struct.a = "aaaa";
-		struct.b = 2;
-		struct.skip = "zzzz";
+        SimpleTableDefaultOrdering struct = new SimpleTableDefaultOrdering();
+        struct.a = "aaaa";
+        struct.b = 2;
+        struct.skip = "zzzz";
 
-		final int resultA = 5;
-		setupOutboundConverter(struct.a, resultA);
+        final int resultA = 5;
+        setupOutboundConverter(struct.a, resultA);
 
-		final String resultB = "cb";
-		setupOutboundConverter(struct.b, resultB);
+        final String resultB = "cb";
+        setupOutboundConverter(struct.b, resultB);
 
-		Map<?, ?> fromJava = c.fromJava(converter, struct, 0);
+        Map<?, ?> fromJava = c.fromJava(converter, struct, 0);
 
-		Map<Object, Object> result = Maps.newHashMap();
-		result.put(0, resultA);
-		result.put(1, resultB);
+        Map<Object, Object> result = Maps.newHashMap();
+        result.put(0, resultA);
+        result.put(1, resultB);
 
-		Assert.assertEquals(result, fromJava);
+        Assert.assertEquals(result, fromJava);
 
-		verifyOutboundConversion(struct.a);
-		verifyOutboundConversion(struct.b);
-	}
+        verifyOutboundConversion(struct.a);
+        verifyOutboundConversion(struct.b);
+    }
 
-	@Test
-	public void testDefaultOrderedInboundConversionZeroIndexed() {
-		final IStructHandler c = getConverter(SimpleTableDefaultOrdering.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testDefaultOrderedInboundConversionZeroIndexed() {
+        final IStructHandler c = getConverter(SimpleTableDefaultOrdering.class);
+        verifyFieldOrder(c, "a", "b");
 
-		final String inputA = "ca";
-		final String inputB = "zzzz";
+        final String inputA = "ca";
+        final String inputB = "zzzz";
 
-		Map<Object, Object> input = Maps.newHashMap();
-		input.put(0, inputA);
-		input.put(1, inputB);
+        Map<Object, Object> input = Maps.newHashMap();
+        input.put(0, inputA);
+        input.put(1, inputB);
 
-		final String resultA = "ca";
-		final int resultB = 2;
+        final String resultA = "ca";
+        final int resultB = 2;
 
-		setupInboundConverter(inputA, String.class, resultA);
-		setupInboundConverter(inputB, int.class, resultB);
+        setupInboundConverter(inputA, String.class, resultA);
+        setupInboundConverter(inputB, int.class, resultB);
 
-		Object o = c.toJava(converter, input, 0);
+        Object o = c.toJava(converter, input, 0);
 
-		verifyInboundConversion(inputA, String.class);
-		verifyInboundConversion(inputB, int.class);
+        verifyInboundConversion(inputA, String.class);
+        verifyInboundConversion(inputB, int.class);
 
-		Assert.assertTrue(o instanceof SimpleTableDefaultOrdering);
+        Assert.assertTrue(o instanceof SimpleTableDefaultOrdering);
 
-		SimpleTableDefaultOrdering converted = (SimpleTableDefaultOrdering)o;
+        SimpleTableDefaultOrdering converted = (SimpleTableDefaultOrdering) o;
 
-		Assert.assertEquals(resultA, converted.a);
-		Assert.assertEquals(resultB, converted.b);
-	}
+        Assert.assertEquals(resultA, converted.a);
+        Assert.assertEquals(resultB, converted.b);
+    }
 
-	@Test
-	public void testDefaultOrderedInboundConversionOneIndexed() {
-		final IStructHandler c = getConverter(SimpleTableDefaultOrdering.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testDefaultOrderedInboundConversionOneIndexed() {
+        final IStructHandler c = getConverter(SimpleTableDefaultOrdering.class);
+        verifyFieldOrder(c, "a", "b");
 
-		final String inputA = "ca";
-		final String inputB = "zzzz";
+        final String inputA = "ca";
+        final String inputB = "zzzz";
 
-		Map<Object, Object> input = Maps.newHashMap();
-		input.put(1, inputA);
-		input.put(2, inputB);
+        Map<Object, Object> input = Maps.newHashMap();
+        input.put(1, inputA);
+        input.put(2, inputB);
 
-		final String resultA = "ca";
-		final int resultB = 2;
+        final String resultA = "ca";
+        final int resultB = 2;
 
-		setupInboundConverter(inputA, String.class, resultA);
-		setupInboundConverter(inputB, int.class, resultB);
+        setupInboundConverter(inputA, String.class, resultA);
+        setupInboundConverter(inputB, int.class, resultB);
 
-		Object o = c.toJava(converter, input, 1);
+        Object o = c.toJava(converter, input, 1);
 
-		verifyInboundConversion(inputA, String.class);
-		verifyInboundConversion(inputB, int.class);
+        verifyInboundConversion(inputA, String.class);
+        verifyInboundConversion(inputB, int.class);
 
-		Assert.assertTrue(o instanceof SimpleTableDefaultOrdering);
+        Assert.assertTrue(o instanceof SimpleTableDefaultOrdering);
 
-		SimpleTableDefaultOrdering converted = (SimpleTableDefaultOrdering)o;
+        SimpleTableDefaultOrdering converted = (SimpleTableDefaultOrdering) o;
 
-		Assert.assertEquals(resultA, converted.a);
-		Assert.assertEquals(resultB, converted.b);
-	}
+        Assert.assertEquals(resultA, converted.a);
+        Assert.assertEquals(resultB, converted.b);
+    }
 
-	@Test
-	public void testDefaultOrderedInboundConversionExtraFields() {
-		final IStructHandler c = getConverter(SimpleTableDefaultOrdering.class);
-		verifyFieldOrder(c, "a", "b");
+    @Test
+    public void testDefaultOrderedInboundConversionExtraFields() {
+        final IStructHandler c = getConverter(SimpleTableDefaultOrdering.class);
+        verifyFieldOrder(c, "a", "b");
 
-		final String inputA = "ca";
-		final String inputB = "zzzz";
+        final String inputA = "ca";
+        final String inputB = "zzzz";
 
-		Map<Object, Object> input = Maps.newHashMap();
-		input.put(1, inputA);
-		input.put(2, inputB);
-		input.put(3, "!!!!");
+        Map<Object, Object> input = Maps.newHashMap();
+        input.put(1, inputA);
+        input.put(2, inputB);
+        input.put(3, "!!!!");
 
-		final String resultA = "ca";
-		final int resultB = 2;
+        final String resultA = "ca";
+        final int resultB = 2;
 
-		setupInboundConverter(inputA, String.class, resultA);
-		setupInboundConverter(inputB, int.class, resultB);
+        setupInboundConverter(inputA, String.class, resultA);
+        setupInboundConverter(inputB, int.class, resultB);
 
-		assertOutboundConversionFail(c, input, 1);
-	}
+        assertOutboundConversionFail(c, input, 1);
+    }
 
-	@ScriptStruct(defaultOutput = Output.TABLE)
-	public static class SimpleTableForcedOrdering {
+    @ScriptStruct(defaultOutput = Output.TABLE)
+    public static class SimpleTableForcedOrdering {
 
-		@StructField(index = 1)
-		public String a;
+        @StructField(index = 1)
+        public String a;
 
-		@StructField(index = 0)
-		public int b;
+        @StructField(index = 0)
+        public int b;
 
-		@StructField(index = 2)
-		public Float c;
-	}
+        @StructField(index = 2)
+        public Float c;
+    }
 
-	@Test
-	public void testCustomOrderedOutboundConversionZeroIndexed() {
-		final IStructHandler c = getConverter(SimpleTableForcedOrdering.class);
-		verifyFieldOrder(c, "b", "a", "c");
+    @Test
+    public void testCustomOrderedOutboundConversionZeroIndexed() {
+        final IStructHandler c = getConverter(SimpleTableForcedOrdering.class);
+        verifyFieldOrder(c, "b", "a", "c");
 
-		SimpleTableForcedOrdering struct = new SimpleTableForcedOrdering();
-		struct.a = "aaaa";
-		struct.b = 2;
-		struct.c = 4.0f;
+        SimpleTableForcedOrdering struct = new SimpleTableForcedOrdering();
+        struct.a = "aaaa";
+        struct.b = 2;
+        struct.c = 4.0f;
 
-		final int resultA = 5;
-		setupOutboundConverter(struct.a, resultA);
+        final int resultA = 5;
+        setupOutboundConverter(struct.a, resultA);
 
-		final String resultB = "cb";
-		setupOutboundConverter(struct.b, resultB);
+        final String resultB = "cb";
+        setupOutboundConverter(struct.b, resultB);
 
-		final float resultC = 0.2f;
-		setupOutboundConverter(struct.c, resultC);
+        final float resultC = 0.2f;
+        setupOutboundConverter(struct.c, resultC);
 
-		Map<?, ?> fromJava = c.fromJava(converter, struct, 1);
+        Map<?, ?> fromJava = c.fromJava(converter, struct, 1);
 
-		// Lua ordering
-		Map<Object, Object> result = Maps.newHashMap();
-		result.put(1, resultB);
-		result.put(2, resultA);
-		result.put(3, resultC);
+        // Lua ordering
+        Map<Object, Object> result = Maps.newHashMap();
+        result.put(1, resultB);
+        result.put(2, resultA);
+        result.put(3, resultC);
 
-		Assert.assertEquals(result, fromJava);
+        Assert.assertEquals(result, fromJava);
 
-		verifyOutboundConversion(struct.a);
-		verifyOutboundConversion(struct.b);
-		verifyOutboundConversion(struct.c);
-	}
+        verifyOutboundConversion(struct.a);
+        verifyOutboundConversion(struct.b);
+        verifyOutboundConversion(struct.c);
+    }
 
-	@Test
-	public void testCustomOrderedOutboundConversionOneIndexed() {
-		final IStructHandler c = getConverter(SimpleTableForcedOrdering.class);
-		verifyFieldOrder(c, "b", "a", "c");
+    @Test
+    public void testCustomOrderedOutboundConversionOneIndexed() {
+        final IStructHandler c = getConverter(SimpleTableForcedOrdering.class);
+        verifyFieldOrder(c, "b", "a", "c");
 
-		SimpleTableForcedOrdering struct = new SimpleTableForcedOrdering();
-		struct.a = "aaaa";
-		struct.b = 2;
-		struct.c = 4.0f;
+        SimpleTableForcedOrdering struct = new SimpleTableForcedOrdering();
+        struct.a = "aaaa";
+        struct.b = 2;
+        struct.c = 4.0f;
 
-		final int resultA = 5;
-		setupOutboundConverter(struct.a, resultA);
+        final int resultA = 5;
+        setupOutboundConverter(struct.a, resultA);
 
-		final String resultB = "cb";
-		setupOutboundConverter(struct.b, resultB);
+        final String resultB = "cb";
+        setupOutboundConverter(struct.b, resultB);
 
-		final float resultC = 0.2f;
-		setupOutboundConverter(struct.c, resultC);
+        final float resultC = 0.2f;
+        setupOutboundConverter(struct.c, resultC);
 
-		Map<?, ?> fromJava = c.fromJava(converter, struct, 0);
+        Map<?, ?> fromJava = c.fromJava(converter, struct, 0);
 
-		// Java ordering
-		Map<Object, Object> result = Maps.newHashMap();
-		result.put(0, resultB);
-		result.put(1, resultA);
-		result.put(2, resultC);
+        // Java ordering
+        Map<Object, Object> result = Maps.newHashMap();
+        result.put(0, resultB);
+        result.put(1, resultA);
+        result.put(2, resultC);
 
-		Assert.assertEquals(result, fromJava);
+        Assert.assertEquals(result, fromJava);
 
-		verifyOutboundConversion(struct.a);
-		verifyOutboundConversion(struct.b);
-		verifyOutboundConversion(struct.c);
-	}
+        verifyOutboundConversion(struct.a);
+        verifyOutboundConversion(struct.b);
+        verifyOutboundConversion(struct.c);
+    }
 
-	@Test
-	public void testCustomOrderedInboundConversion() {
-		final IStructHandler c = getConverter(SimpleTableForcedOrdering.class);
-		verifyFieldOrder(c, "b", "a", "c");
+    @Test
+    public void testCustomOrderedInboundConversion() {
+        final IStructHandler c = getConverter(SimpleTableForcedOrdering.class);
+        verifyFieldOrder(c, "b", "a", "c");
 
-		final String inputA = "ca";
-		final String inputB = "zzzz";
-		final int inputC = 999;
+        final String inputA = "ca";
+        final String inputB = "zzzz";
+        final int inputC = 999;
 
-		Map<Object, Object> input = Maps.newHashMap();
-		input.put(1, inputB);
-		input.put(2, inputA);
-		input.put(3, inputC);
+        Map<Object, Object> input = Maps.newHashMap();
+        input.put(1, inputB);
+        input.put(2, inputA);
+        input.put(3, inputC);
 
-		final String resultA = "ca";
-		final int resultB = 2;
-		final Float resultC = 2.4f;
+        final String resultA = "ca";
+        final int resultB = 2;
+        final Float resultC = 2.4f;
 
-		setupInboundConverter(inputA, String.class, resultA);
-		setupInboundConverter(inputB, int.class, resultB);
-		setupInboundConverter(inputC, Float.class, resultC);
+        setupInboundConverter(inputA, String.class, resultA);
+        setupInboundConverter(inputB, int.class, resultB);
+        setupInboundConverter(inputC, Float.class, resultC);
 
-		Object o = c.toJava(converter, input, 1);
+        Object o = c.toJava(converter, input, 1);
 
-		verifyInboundConversion(inputA, String.class);
-		verifyInboundConversion(inputB, int.class);
-		verifyInboundConversion(inputC, Float.class);
+        verifyInboundConversion(inputA, String.class);
+        verifyInboundConversion(inputB, int.class);
+        verifyInboundConversion(inputC, Float.class);
 
-		Assert.assertTrue(o instanceof SimpleTableForcedOrdering);
+        Assert.assertTrue(o instanceof SimpleTableForcedOrdering);
 
-		SimpleTableForcedOrdering converted = (SimpleTableForcedOrdering)o;
+        SimpleTableForcedOrdering converted = (SimpleTableForcedOrdering) o;
 
-		Assert.assertEquals(resultA, converted.a);
-		Assert.assertEquals(resultB, converted.b);
-		Assert.assertEquals(resultC, converted.c);
-	}
+        Assert.assertEquals(resultA, converted.a);
+        Assert.assertEquals(resultB, converted.b);
+        Assert.assertEquals(resultC, converted.c);
+    }
 
-	public static class GenericBase1<A, B> {
-		@StructField
-		public A fieldA;
+    public static class GenericBase1<A, B> {
 
-		@StructField
-		public B fieldB;
-	}
+        @StructField
+        public A fieldA;
 
-	public static class GenericBase2<A, B, C, D> extends GenericBase1<C, D> {
-		@StructField
-		public A fieldC;
+        @StructField
+        public B fieldB;
+    }
 
-		@StructField
-		public B fieldD;
-	}
+    public static class GenericBase2<A, B, C, D> extends GenericBase1<C, D> {
 
-	@ScriptStruct
-	public static class GenericDerrived extends GenericBase2<Integer, String, Boolean, Float> {}
+        @StructField
+        public A fieldC;
 
-	@Test
-	public void testGenericBaseOutboundConversion() {
-		final IStructHandler c = getConverter(GenericDerrived.class);
-		verifyFieldOrder(c, "fieldA", "fieldB", "fieldC", "fieldD");
+        @StructField
+        public B fieldD;
+    }
 
-		GenericDerrived struct = new GenericDerrived();
-		struct.fieldA = false;
-		struct.fieldB = 3.5f;
-		struct.fieldC = 34;
-		struct.fieldD = "Hello";
+    @ScriptStruct
+    public static class GenericDerrived extends GenericBase2<Integer, String, Boolean, Float> {
+    }
 
-		final int resultA = 5;
-		setupOutboundConverter(struct.fieldA, resultA);
+    @Test
+    public void testGenericBaseOutboundConversion() {
+        final IStructHandler c = getConverter(GenericDerrived.class);
+        verifyFieldOrder(c, "fieldA", "fieldB", "fieldC", "fieldD");
 
-		final String resultB = "cb";
-		setupOutboundConverter(struct.fieldB, resultB);
+        GenericDerrived struct = new GenericDerrived();
+        struct.fieldA = false;
+        struct.fieldB = 3.5f;
+        struct.fieldC = 34;
+        struct.fieldD = "Hello";
 
-		final float resultC = 0.2f;
-		setupOutboundConverter(struct.fieldC, resultC);
+        final int resultA = 5;
+        setupOutboundConverter(struct.fieldA, resultA);
 
-		final boolean resultD = false;
-		setupOutboundConverter(struct.fieldD, resultD);
+        final String resultB = "cb";
+        setupOutboundConverter(struct.fieldB, resultB);
 
-		Map<?, ?> fromJava = c.fromJava(converter, struct, 0);
+        final float resultC = 0.2f;
+        setupOutboundConverter(struct.fieldC, resultC);
 
-		Map<Object, Object> result = Maps.newHashMap();
-		result.put("fieldA", resultA);
-		result.put("fieldB", resultB);
-		result.put("fieldC", resultC);
-		result.put("fieldD", resultD);
+        final boolean resultD = false;
+        setupOutboundConverter(struct.fieldD, resultD);
 
-		Assert.assertEquals(result, fromJava);
+        Map<?, ?> fromJava = c.fromJava(converter, struct, 0);
 
-		verifyOutboundConversion(struct.fieldA);
-		verifyOutboundConversion(struct.fieldB);
-		verifyOutboundConversion(struct.fieldC);
-		verifyOutboundConversion(struct.fieldD);
-	}
+        Map<Object, Object> result = Maps.newHashMap();
+        result.put("fieldA", resultA);
+        result.put("fieldB", resultB);
+        result.put("fieldC", resultC);
+        result.put("fieldD", resultD);
 
-	@Test
-	public void testGenericBaseInboundConversion() {
-		final IStructHandler c = getConverter(GenericDerrived.class);
-		verifyFieldOrder(c, "fieldA", "fieldB", "fieldC", "fieldD");
+        Assert.assertEquals(result, fromJava);
 
-		final Boolean inputA = false;
-		final Float inputB = 999.3f;
-		final Integer inputC = 3214;
-		final String inputD = "zzzz";
+        verifyOutboundConversion(struct.fieldA);
+        verifyOutboundConversion(struct.fieldB);
+        verifyOutboundConversion(struct.fieldC);
+        verifyOutboundConversion(struct.fieldD);
+    }
 
-		Map<Object, Object> input = Maps.newHashMap();
-		input.put("fieldA", inputA);
-		input.put("fieldB", inputB);
-		input.put("fieldC", inputC);
-		input.put("fieldD", inputD);
+    @Test
+    public void testGenericBaseInboundConversion() {
+        final IStructHandler c = getConverter(GenericDerrived.class);
+        verifyFieldOrder(c, "fieldA", "fieldB", "fieldC", "fieldD");
 
-		final Boolean resultA = true;
-		final Float resultB = 9432.4f;
-		final Integer resultC = 5425;
-		final String resultD = "sfs";
+        final Boolean inputA = false;
+        final Float inputB = 999.3f;
+        final Integer inputC = 3214;
+        final String inputD = "zzzz";
 
-		setupInboundConverter(inputA, Boolean.class, resultA);
-		setupInboundConverter(inputB, Float.class, resultB);
-		setupInboundConverter(inputC, Integer.class, resultC);
-		setupInboundConverter(inputD, String.class, resultD);
+        Map<Object, Object> input = Maps.newHashMap();
+        input.put("fieldA", inputA);
+        input.put("fieldB", inputB);
+        input.put("fieldC", inputC);
+        input.put("fieldD", inputD);
 
-		Object o = c.toJava(converter, input, 1);
+        final Boolean resultA = true;
+        final Float resultB = 9432.4f;
+        final Integer resultC = 5425;
+        final String resultD = "sfs";
 
-		verifyInboundConversion(inputA, Boolean.class);
-		verifyInboundConversion(inputB, Float.class);
-		verifyInboundConversion(inputC, Integer.class);
-		verifyInboundConversion(inputD, String.class);
+        setupInboundConverter(inputA, Boolean.class, resultA);
+        setupInboundConverter(inputB, Float.class, resultB);
+        setupInboundConverter(inputC, Integer.class, resultC);
+        setupInboundConverter(inputD, String.class, resultD);
 
-		Assert.assertTrue(o instanceof GenericDerrived);
+        Object o = c.toJava(converter, input, 1);
 
-		GenericDerrived converted = (GenericDerrived)o;
+        verifyInboundConversion(inputA, Boolean.class);
+        verifyInboundConversion(inputB, Float.class);
+        verifyInboundConversion(inputC, Integer.class);
+        verifyInboundConversion(inputD, String.class);
 
-		Assert.assertEquals(resultA, converted.fieldA);
-		Assert.assertEquals(resultB, converted.fieldB);
-		Assert.assertEquals(resultC, converted.fieldC);
-		Assert.assertEquals(resultD, converted.fieldD);
-	}
+        Assert.assertTrue(o instanceof GenericDerrived);
 
-	@ScriptStruct
-	public static class DuplicateManualIndex {
+        GenericDerrived converted = (GenericDerrived) o;
 
-		@StructField(index = 1)
-		public String a;
+        Assert.assertEquals(resultA, converted.fieldA);
+        Assert.assertEquals(resultB, converted.fieldB);
+        Assert.assertEquals(resultC, converted.fieldC);
+        Assert.assertEquals(resultD, converted.fieldD);
+    }
 
-		@StructField(index = 1)
-		public int b;
+    @ScriptStruct
+    public static class DuplicateManualIndex {
 
-		@StructField(index = 0)
-		public Float c;
-	}
+        @StructField(index = 1)
+        public String a;
 
-	@Test(expected = InvalidStructureException.class)
-	public void testDuplicateManualIndex() {
-		getConverter(DuplicateManualIndex.class);
-	}
+        @StructField(index = 1)
+        public int b;
 
-	@ScriptStruct
-	public static class DuplicateAutomaticIndex {
+        @StructField(index = 0)
+        public Float c;
+    }
 
-		@StructField(index = 1)
-		public String a;
+    @Test(expected = InvalidStructureException.class)
+    public void testDuplicateManualIndex() {
+        getConverter(DuplicateManualIndex.class);
+    }
 
-		@StructField()
-		public int b;
+    @ScriptStruct
+    public static class DuplicateAutomaticIndex {
 
-		@StructField(index = 0)
-		public Float c;
-	}
+        @StructField(index = 1)
+        public String a;
 
-	@Test(expected = InvalidStructureException.class)
-	public void testDuplicateAutomaticIndex() {
-		getConverter(DuplicateAutomaticIndex.class);
-	}
+        @StructField()
+        public int b;
 
-	@ScriptStruct
-	public static class NegativeIndex {
-		@StructField(index = -1)
-		public String a;
+        @StructField(index = 0)
+        public Float c;
+    }
 
-		@StructField()
-		public int b;
-	}
+    @Test(expected = InvalidStructureException.class)
+    public void testDuplicateAutomaticIndex() {
+        getConverter(DuplicateAutomaticIndex.class);
+    }
 
-	@Test(expected = InvalidStructureException.class)
-	public void testNegativeIndex() {
-		getConverter(NegativeIndex.class);
-	}
+    @ScriptStruct
+    public static class NegativeIndex {
 
-	@ScriptStruct
-	public static class NonContinuousIndex {
-		@StructField
-		public String a;
+        @StructField(index = -1)
+        public String a;
 
-		@StructField(index = 2)
-		public int b;
-	}
+        @StructField()
+        public int b;
+    }
 
-	@Test(expected = InvalidStructureException.class)
-	public void testNonContinuousIndex() {
-		getConverter(NonContinuousIndex.class);
-	}
+    @Test(expected = InvalidStructureException.class)
+    public void testNegativeIndex() {
+        getConverter(NegativeIndex.class);
+    }
+
+    @ScriptStruct
+    public static class NonContinuousIndex {
+
+        @StructField
+        public String a;
+
+        @StructField(index = 2)
+        public int b;
+    }
+
+    @Test(expected = InvalidStructureException.class)
+    public void testNonContinuousIndex() {
+        getConverter(NonContinuousIndex.class);
+    }
 
 }

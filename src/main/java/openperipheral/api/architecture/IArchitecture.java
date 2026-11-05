@@ -14,23 +14,23 @@ import openperipheral.api.helpers.Index;
  */
 public interface IArchitecture {
 
-	public String architecture();
+    public String architecture();
 
-	/**
-	 * Convert object to Lua object with callable methods
-	 */
-	public Object wrapObject(Object target);
+    /**
+     * Convert object to Lua object with callable methods
+     */
+    public Object wrapObject(Object target);
 
-	/**
-	 * Creates new index with offset native for this architecture (usually 1 for Lua based architectures)
-	 */
-	public Index createIndex(int value);
+    /**
+     * Creates new index with offset native for this architecture (usually 1 for Lua based architectures)
+     */
+    public Index createIndex(int value);
 
-	/**
-	 * Return type converter.
-	 * Alternative to {@code IConverterManager.getConverter(architecture())}
-	 *
-	 * @see IConverterManager#getConverter(String)
-	 */
-	public IConverter getConverter();
+    /**
+     * Return type converter.
+     * Alternative to {@code IConverterManager.getConverter(architecture())}
+     *
+     * @see IConverterManager#getConverter(String)
+     */
+    public IConverter getConverter();
 }

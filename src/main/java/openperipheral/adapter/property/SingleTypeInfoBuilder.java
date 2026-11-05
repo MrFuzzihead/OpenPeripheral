@@ -1,9 +1,11 @@
 package openperipheral.adapter.property;
 
-import com.google.common.base.Preconditions;
-import com.google.common.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+
+import com.google.common.base.Preconditions;
+import com.google.common.reflect.TypeToken;
+
 import openperipheral.adapter.types.SingleArgType;
 import openperipheral.adapter.types.classifier.TypeClassifier;
 import openperipheral.api.adapter.IScriptType;
@@ -12,173 +14,186 @@ import openperipheral.api.property.ISingleTypedCustomProperty;
 import openperipheral.api.property.PropertyValueDocType;
 
 public class SingleTypeInfoBuilder {
-	private static final TypeToken<?> CUSTOM_PROPERTY_TYPE = TypeToken.of(ISingleCustomProperty.class);
-	private static final TypeVariable<?> CUSTOM_PROPERTY_VALUE_TYPE;
 
-	private static final TypeToken<?> CUSTOM_TYPED_PROPERTY_TYPE = TypeToken.of(ISingleTypedCustomProperty.class);
-	private static final TypeVariable<?> CUSTOM_TYPED_PROPERTY_VALUE_TYPE;
+    private static final TypeToken<?> CUSTOM_PROPERTY_TYPE = TypeToken.of(ISingleCustomProperty.class);
+    private static final TypeVariable<?> CUSTOM_PROPERTY_VALUE_TYPE;
 
-	static {
-		{
-			TypeVariable<?>[] vars = ISingleCustomProperty.class.getTypeParameters();
-			CUSTOM_PROPERTY_VALUE_TYPE = vars[0];
-		}
+    private static final TypeToken<?> CUSTOM_TYPED_PROPERTY_TYPE = TypeToken.of(ISingleTypedCustomProperty.class);
+    private static final TypeVariable<?> CUSTOM_TYPED_PROPERTY_VALUE_TYPE;
 
-		{
-			TypeVariable<?>[] vars = ISingleTypedCustomProperty.class.getTypeParameters();
-			CUSTOM_TYPED_PROPERTY_VALUE_TYPE = vars[0];
-		}
-	}
+    static {
+        {
+            TypeVariable<?>[] vars = ISingleCustomProperty.class.getTypeParameters();
+            CUSTOM_PROPERTY_VALUE_TYPE = vars[0];
+        }
 
-	private interface ITypeProvider {
-		public Type getType(Object target);
-	}
+        {
+            TypeVariable<?>[] vars = ISingleTypedCustomProperty.class.getTypeParameters();
+            CUSTOM_TYPED_PROPERTY_VALUE_TYPE = vars[0];
+        }
+    }
 
-	private static ITypeProvider createConstantTypeProvider(final Type type) {
-		return new ITypeProvider() {
-			@Override
-			public Type getType(Object target) {
-				return type;
-			}
-		};
-	}
+    private interface ITypeProvider {
 
-	private static interface ITypesProvider {
-		public ITypeProvider getValueType();
+        public Type getType(Object target);
+    }
 
-		public IScriptType getValueDocType();
-	}
+    private static ITypeProvider createConstantTypeProvider(final Type type) {
+        return new ITypeProvider() {
 
-	private static final ITypeProvider DELEGATING_TYPE_PROVIDER = new ITypeProvider() {
-		@Override
-		public Type getType(Object target) {
-			return ((ISingleTypedCustomProperty<?>)target).getType();
-		}
-	};
+            @Override
+            public Type getType(Object target) {
+                return type;
+            }
+        };
+    }
 
-	private abstract static class CustomPropertyProviderBase implements ITypesProvider {
-		private final Class<?> fieldType;
-		protected final Type valueType;
+    private static interface ITypesProvider {
 
-		public CustomPropertyProviderBase(TypeToken<?> fieldType, TypeVariable<?> var) {
-			this.fieldType = fieldType.getRawType();
-			this.valueType = fieldType.resolveType(var).getType();
-		}
+        public ITypeProvider getValueType();
 
-		@Override
-		public IScriptType getValueDocType() {
-			final PropertyValueDocType customValueDoc = fieldType.getAnnotation(PropertyValueDocType.class);
-			return (customValueDoc == null)? TypeClassifier.INSTANCE.classifyType(valueType) : SingleArgType.valueOf(customValueDoc.value());
-		}
-	}
+        public IScriptType getValueDocType();
+    }
 
-	private static class CustomPropertyTypesProvider extends CustomPropertyProviderBase {
-		public CustomPropertyTypesProvider(TypeToken<?> fieldType) {
-			super(fieldType, CUSTOM_PROPERTY_VALUE_TYPE);
-		}
+    private static final ITypeProvider DELEGATING_TYPE_PROVIDER = new ITypeProvider() {
 
-		@Override
-		public ITypeProvider getValueType() {
-			return createConstantTypeProvider(valueType);
-		}
-	}
+        @Override
+        public Type getType(Object target) {
+            return ((ISingleTypedCustomProperty<?>) target).getType();
+        }
+    };
 
-	private static class CustomTypedPropertyTypesProvider extends CustomPropertyProviderBase {
-		public CustomTypedPropertyTypesProvider(TypeToken<?> fieldType) {
-			super(fieldType, CUSTOM_TYPED_PROPERTY_VALUE_TYPE);
-		}
+    private abstract static class CustomPropertyProviderBase implements ITypesProvider {
 
-		@Override
-		public ITypeProvider getValueType() {
-			return DELEGATING_TYPE_PROVIDER;
-		}
-	}
+        private final Class<?> fieldType;
+        protected final Type valueType;
 
-	private static class DefaultPropertyTypesProvider implements ITypesProvider {
+        public CustomPropertyProviderBase(TypeToken<?> fieldType, TypeVariable<?> var) {
+            this.fieldType = fieldType.getRawType();
+            this.valueType = fieldType.resolveType(var)
+                .getType();
+        }
 
-		private final Type fieldType;
+        @Override
+        public IScriptType getValueDocType() {
+            final PropertyValueDocType customValueDoc = fieldType.getAnnotation(PropertyValueDocType.class);
+            return (customValueDoc == null) ? TypeClassifier.INSTANCE.classifyType(valueType)
+                : SingleArgType.valueOf(customValueDoc.value());
+        }
+    }
 
-		public DefaultPropertyTypesProvider(Type fieldType) {
-			this.fieldType = fieldType;
-		}
+    private static class CustomPropertyTypesProvider extends CustomPropertyProviderBase {
 
-		@Override
-		public ITypeProvider getValueType() {
-			return createConstantTypeProvider(fieldType);
-		}
+        public CustomPropertyTypesProvider(TypeToken<?> fieldType) {
+            super(fieldType, CUSTOM_PROPERTY_VALUE_TYPE);
+        }
 
-		@Override
-		public IScriptType getValueDocType() {
-			return TypeClassifier.INSTANCE.classifyType(fieldType);
-		}
+        @Override
+        public ITypeProvider getValueType() {
+            return createConstantTypeProvider(valueType);
+        }
+    }
 
-	}
+    private static class CustomTypedPropertyTypesProvider extends CustomPropertyProviderBase {
 
-	private final TypeToken<?> fieldType;
+        public CustomTypedPropertyTypesProvider(TypeToken<?> fieldType) {
+            super(fieldType, CUSTOM_TYPED_PROPERTY_VALUE_TYPE);
+        }
 
-	private Type overridenValueType;
+        @Override
+        public ITypeProvider getValueType() {
+            return DELEGATING_TYPE_PROVIDER;
+        }
+    }
 
-	private IScriptType overridenValueDocType;
-	private ITypesProvider typesProvider;
+    private static class DefaultPropertyTypesProvider implements ITypesProvider {
 
-	public SingleTypeInfoBuilder(Type fieldType) {
-		this.fieldType = TypeToken.of(fieldType);
-	}
+        private final Type fieldType;
 
-	public void overrideValueType(Class<?> type) {
-		this.overridenValueType = type;
-	}
+        public DefaultPropertyTypesProvider(Type fieldType) {
+            this.fieldType = fieldType;
+        }
 
-	public void overrideValueDocType(IScriptType type) {
-		this.overridenValueDocType = type;
-	}
+        @Override
+        public ITypeProvider getValueType() {
+            return createConstantTypeProvider(fieldType);
+        }
 
-	private static ITypesProvider createTypesProvider(TypeToken<?> fieldType) {
-		if (CUSTOM_PROPERTY_TYPE.isAssignableFrom(fieldType)) {
-			if (CUSTOM_TYPED_PROPERTY_TYPE.isAssignableFrom(fieldType)) return new CustomTypedPropertyTypesProvider(fieldType);
-			else return new CustomPropertyTypesProvider(fieldType);
-		}
-		return new DefaultPropertyTypesProvider(fieldType.getType());
-	}
+        @Override
+        public IScriptType getValueDocType() {
+            return TypeClassifier.INSTANCE.classifyType(fieldType);
+        }
 
-	private ITypesProvider getTypesProvider() {
-		if (typesProvider == null) typesProvider = createTypesProvider(fieldType);
-		return typesProvider;
-	}
+    }
 
-	private static SingleTypeInfo createTypeInfo(final ITypeProvider valueTypeProvider, final IScriptType valueDocType) {
-		Preconditions.checkNotNull(valueTypeProvider, "Failed to deduce value type");
-		Preconditions.checkNotNull(valueDocType, "Failed to deduce value doc type");
+    private final TypeToken<?> fieldType;
 
-		return new SingleTypeInfo(valueDocType) {
-			@Override
-			public Type getValueType(Object target) {
-				return valueTypeProvider.getType(target);
-			}
-		};
-	}
+    private Type overridenValueType;
 
-	public SingleTypeInfo build() {
-		final ITypeProvider valueTypeProvider;
+    private IScriptType overridenValueDocType;
+    private ITypesProvider typesProvider;
 
-		if (overridenValueType == null) {
-			valueTypeProvider = getTypesProvider().getValueType();
-		} else {
-			valueTypeProvider = createConstantTypeProvider(overridenValueType);
-		}
+    public SingleTypeInfoBuilder(Type fieldType) {
+        this.fieldType = TypeToken.of(fieldType);
+    }
 
-		final IScriptType valueDocType;
+    public void overrideValueType(Class<?> type) {
+        this.overridenValueType = type;
+    }
 
-		if (overridenValueDocType == null) {
-			if (overridenValueType == null) {
-				valueDocType = getTypesProvider().getValueDocType();
-			} else {
-				valueDocType = TypeClassifier.INSTANCE.classifyType(overridenValueType);
-			}
-		} else {
-			valueDocType = overridenValueDocType;
-		}
+    public void overrideValueDocType(IScriptType type) {
+        this.overridenValueDocType = type;
+    }
 
-		return createTypeInfo(valueTypeProvider, valueDocType);
-	}
+    private static ITypesProvider createTypesProvider(TypeToken<?> fieldType) {
+        if (CUSTOM_PROPERTY_TYPE.isAssignableFrom(fieldType)) {
+            if (CUSTOM_TYPED_PROPERTY_TYPE.isAssignableFrom(fieldType))
+                return new CustomTypedPropertyTypesProvider(fieldType);
+            else return new CustomPropertyTypesProvider(fieldType);
+        }
+        return new DefaultPropertyTypesProvider(fieldType.getType());
+    }
+
+    private ITypesProvider getTypesProvider() {
+        if (typesProvider == null) typesProvider = createTypesProvider(fieldType);
+        return typesProvider;
+    }
+
+    private static SingleTypeInfo createTypeInfo(final ITypeProvider valueTypeProvider,
+        final IScriptType valueDocType) {
+        Preconditions.checkNotNull(valueTypeProvider, "Failed to deduce value type");
+        Preconditions.checkNotNull(valueDocType, "Failed to deduce value doc type");
+
+        return new SingleTypeInfo(valueDocType) {
+
+            @Override
+            public Type getValueType(Object target) {
+                return valueTypeProvider.getType(target);
+            }
+        };
+    }
+
+    public SingleTypeInfo build() {
+        final ITypeProvider valueTypeProvider;
+
+        if (overridenValueType == null) {
+            valueTypeProvider = getTypesProvider().getValueType();
+        } else {
+            valueTypeProvider = createConstantTypeProvider(overridenValueType);
+        }
+
+        final IScriptType valueDocType;
+
+        if (overridenValueDocType == null) {
+            if (overridenValueType == null) {
+                valueDocType = getTypesProvider().getValueDocType();
+            } else {
+                valueDocType = TypeClassifier.INSTANCE.classifyType(overridenValueType);
+            }
+        } else {
+            valueDocType = overridenValueDocType;
+        }
+
+        return createTypeInfo(valueTypeProvider, valueDocType);
+    }
 }

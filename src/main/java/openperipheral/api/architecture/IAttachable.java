@@ -5,8 +5,8 @@ package openperipheral.api.architecture;
  */
 public interface IAttachable {
 
-	public void addComputer(IArchitectureAccess machine);
+    public void addComputer(IArchitectureAccess machine);
 
-	public void removeComputer(IArchitectureAccess machine);
+    public void removeComputer(IArchitectureAccess machine);
 
 }

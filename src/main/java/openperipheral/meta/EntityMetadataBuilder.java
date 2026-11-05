@@ -1,13 +1,16 @@
 package openperipheral.meta;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Vec3;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+
 import openperipheral.api.adapter.method.ScriptObject;
 import openperipheral.api.meta.IEntityCustomMetaProvider;
 import openperipheral.api.meta.IEntityMetaProvider;
@@ -16,163 +19,168 @@ import openperipheral.api.meta.IMetaProviderProxy;
 
 public class EntityMetadataBuilder implements IEntityPartialMetaBuilder {
 
-	@ScriptObject
-	private static class Proxy implements IMetaProviderProxy {
-		private final Map<String, IEntityMetaProvider<?>> providers;
-		private final Vec3 relativePos;
-		private final Entity entity;
+    @ScriptObject
+    private static class Proxy implements IMetaProviderProxy {
 
-		private Proxy(Map<String, IEntityMetaProvider<?>> providers, Vec3 relativePos, Entity entity) {
-			this.providers = ImmutableMap.copyOf(providers);
-			this.relativePos = relativePos;
-			this.entity = entity;
-		}
+        private final Map<String, IEntityMetaProvider<?>> providers;
+        private final Vec3 relativePos;
+        private final Entity entity;
 
-		@Override
-		public Map<String, Object> basic() {
-			return createBasicProperties(entity, relativePos);
-		}
+        private Proxy(Map<String, IEntityMetaProvider<?>> providers, Vec3 relativePos, Entity entity) {
+            this.providers = ImmutableMap.copyOf(providers);
+            this.relativePos = relativePos;
+            this.entity = entity;
+        }
 
-		@Override
-		public Map<String, Object> all() {
-			Map<String, Object> map = basic();
-			fillCustomProperties(map, providers.values(), entity, relativePos);
-			return map;
-		}
+        @Override
+        public Map<String, Object> basic() {
+            return createBasicProperties(entity, relativePos);
+        }
 
-		@Override
-		public Set<String> keys() {
-			return ImmutableSet.copyOf(providers.keySet());
-		}
+        @Override
+        public Map<String, Object> all() {
+            Map<String, Object> map = basic();
+            fillCustomProperties(map, providers.values(), entity, relativePos);
+            return map;
+        }
 
-		@Override
-		public Map<String, Object> select(String... keys) {
-			Map<String, Object> result = basic();
+        @Override
+        public Set<String> keys() {
+            return ImmutableSet.copyOf(providers.keySet());
+        }
 
-			for (String key : keys) {
-				IEntityMetaProvider<?> provider = providers.get(key);
-				if (provider != null) {
-					Object value = getProperty(entity, relativePos, provider);
-					if (value != null) result.put(key, value);
-				}
-			}
+        @Override
+        public Map<String, Object> select(String... keys) {
+            Map<String, Object> result = basic();
 
-			return result;
-		}
+            for (String key : keys) {
+                IEntityMetaProvider<?> provider = providers.get(key);
+                if (provider != null) {
+                    Object value = getProperty(entity, relativePos, provider);
+                    if (value != null) result.put(key, value);
+                }
+            }
 
-		@Override
-		public Object single(String key) {
-			IEntityMetaProvider<?> provider = providers.get(key);
-			return provider != null? getProperty(entity, relativePos, provider) : null;
-		}
-	}
+            return result;
+        }
 
-	private static void fillCustomProperties(Map<String, Object> map, final Iterable<IEntityMetaProvider<?>> providers, Entity entity, Vec3 relativePos) {
-		for (IEntityMetaProvider<?> provider : providers) {
-			Object converted = getProperty(entity, relativePos, provider);
-			if (converted != null) {
-				final String key = provider.getKey();
-				map.put(key, converted);
-			}
-		}
-	}
+        @Override
+        public Object single(String key) {
+            IEntityMetaProvider<?> provider = providers.get(key);
+            return provider != null ? getProperty(entity, relativePos, provider) : null;
+        }
+    }
 
-	private static Map<String, Object> createBasicProperties(Entity entity, Vec3 relativePos) {
-		Map<String, Object> map = Maps.newHashMap();
-		addPositionInfo(map, entity, relativePos);
-		map.put("name", entity.getCommandSenderName());
-		map.put("id", entity.getEntityId());
-		map.put("uuid", entity.getUniqueID());
+    private static void fillCustomProperties(Map<String, Object> map, final Iterable<IEntityMetaProvider<?>> providers,
+        Entity entity, Vec3 relativePos) {
+        for (IEntityMetaProvider<?> provider : providers) {
+            Object converted = getProperty(entity, relativePos, provider);
+            if (converted != null) {
+                final String key = provider.getKey();
+                map.put(key, converted);
+            }
+        }
+    }
 
-		if (entity.riddenByEntity != null) {
-			map.put("riddenBy", entity.riddenByEntity.getEntityId());
-		}
+    private static Map<String, Object> createBasicProperties(Entity entity, Vec3 relativePos) {
+        Map<String, Object> map = Maps.newHashMap();
+        addPositionInfo(map, entity, relativePos);
+        map.put("name", entity.getCommandSenderName());
+        map.put("id", entity.getEntityId());
+        map.put("uuid", entity.getUniqueID());
 
-		if (entity.ridingEntity != null) {
-			map.put("ridingEntity", entity.ridingEntity.getEntityId());
-		}
-		return map;
-	}
+        if (entity.riddenByEntity != null) {
+            map.put("riddenBy", entity.riddenByEntity.getEntityId());
+        }
 
-	private static void addPositionInfo(Map<String, Object> map, Entity entity, Vec3 relativePos) {
-		Map<String, Double> position = (relativePos != null)
-				? addRelativePos(entity, relativePos)
-				: addAbsolutePos(entity);
+        if (entity.ridingEntity != null) {
+            map.put("ridingEntity", entity.ridingEntity.getEntityId());
+        }
+        return map;
+    }
 
-		map.put("position", position);
-	}
+    private static void addPositionInfo(Map<String, Object> map, Entity entity, Vec3 relativePos) {
+        Map<String, Double> position = (relativePos != null) ? addRelativePos(entity, relativePos)
+            : addAbsolutePos(entity);
 
-	private static Map<String, Double> addAbsolutePos(Entity entity) {
-		return createPosition(entity.posX, entity.posY, entity.posZ);
-	}
+        map.put("position", position);
+    }
 
-	private static Map<String, Double> addRelativePos(Entity entity, Vec3 relativePos) {
-		return createPosition(entity.posX - relativePos.xCoord, entity.posY - relativePos.yCoord, entity.posZ - relativePos.zCoord);
-	}
+    private static Map<String, Double> addAbsolutePos(Entity entity) {
+        return createPosition(entity.posX, entity.posY, entity.posZ);
+    }
 
-	private static Map<String, Double> createPosition(double x, double y, double z) {
-		return ImmutableMap.of("x", x, "y", y, "z", z);
-	}
+    private static Map<String, Double> addRelativePos(Entity entity, Vec3 relativePos) {
+        return createPosition(
+            entity.posX - relativePos.xCoord,
+            entity.posY - relativePos.yCoord,
+            entity.posZ - relativePos.zCoord);
+    }
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static Object getProperty(Entity entity, Vec3 relativePos, IEntityMetaProvider provider) {
-		return provider.getMeta(entity, relativePos);
-	}
+    private static Map<String, Double> createPosition(double x, double y, double z) {
+        return ImmutableMap.of("x", x, "y", y, "z", z);
+    }
 
-	protected static Map<String, IEntityMetaProvider<?>> getProviders(Entity entity) {
-		final Map<String, IEntityMetaProvider<?>> immutableProviders = MetaProvidersRegistry.ENITITES.getProviders(entity.getClass());
-		final Map<String, IEntityMetaProvider<?>> providers = Maps.newHashMap(immutableProviders);
-		filterCustomProviders(providers, entity);
-		return providers;
-	}
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static Object getProperty(Entity entity, Vec3 relativePos, IEntityMetaProvider provider) {
+        return provider.getMeta(entity, relativePos);
+    }
 
-	@SuppressWarnings("unchecked")
-	protected static void filterCustomProviders(Map<String, IEntityMetaProvider<?>> providers, Entity entity) {
-		Iterator<IEntityMetaProvider<?>> it = providers.values().iterator();
+    protected static Map<String, IEntityMetaProvider<?>> getProviders(Entity entity) {
+        final Map<String, IEntityMetaProvider<?>> immutableProviders = MetaProvidersRegistry.ENITITES
+            .getProviders(entity.getClass());
+        final Map<String, IEntityMetaProvider<?>> providers = Maps.newHashMap(immutableProviders);
+        filterCustomProviders(providers, entity);
+        return providers;
+    }
 
-		while (it.hasNext()) {
-			final IEntityMetaProvider<?> provider = it.next();
-			if ((provider instanceof IEntityCustomMetaProvider) &&
-					((IEntityCustomMetaProvider<Entity>)provider).canApply(entity))
-				it.remove();
-		}
-	}
+    @SuppressWarnings("unchecked")
+    protected static void filterCustomProviders(Map<String, IEntityMetaProvider<?>> providers, Entity entity) {
+        Iterator<IEntityMetaProvider<?>> it = providers.values()
+            .iterator();
 
-	@Override
-	public IMetaProviderProxy createProxy(Entity entity, Vec3 relativePos) {
-		final Map<String, IEntityMetaProvider<?>> providers = getProviders(entity);
-		return new Proxy(providers, relativePos, entity);
-	}
+        while (it.hasNext()) {
+            final IEntityMetaProvider<?> provider = it.next();
+            if ((provider instanceof IEntityCustomMetaProvider)
+                && ((IEntityCustomMetaProvider<Entity>) provider).canApply(entity)) it.remove();
+        }
+    }
 
-	@Override
-	public Map<String, Object> getBasicEntityMetadata(Entity entity, Vec3 relativePos) {
-		return createBasicProperties(entity, relativePos);
-	}
+    @Override
+    public IMetaProviderProxy createProxy(Entity entity, Vec3 relativePos) {
+        final Map<String, IEntityMetaProvider<?>> providers = getProviders(entity);
+        return new Proxy(providers, relativePos, entity);
+    }
 
-	@Override
-	public Map<String, Object> getEntityMetadata(Entity entity, Vec3 relativePos) {
-		Map<String, Object> map = createBasicProperties(entity, relativePos);
+    @Override
+    public Map<String, Object> getBasicEntityMetadata(Entity entity, Vec3 relativePos) {
+        return createBasicProperties(entity, relativePos);
+    }
 
-		final Iterable<IEntityMetaProvider<?>> providers = getProviders(entity).values();
-		fillCustomProperties(map, providers, entity, relativePos);
-		return map;
-	}
+    @Override
+    public Map<String, Object> getEntityMetadata(Entity entity, Vec3 relativePos) {
+        Map<String, Object> map = createBasicProperties(entity, relativePos);
 
-	@Override
-	public Object getEntityMetadata(String key, Entity entity, Vec3 relativePos) {
-		Map<String, IEntityMetaProvider<?>> providers = getProviders(entity);
+        final Iterable<IEntityMetaProvider<?>> providers = getProviders(entity).values();
+        fillCustomProperties(map, providers, entity, relativePos);
+        return map;
+    }
 
-		IEntityMetaProvider<?> provider = providers.get(key);
-		return provider != null? getProperty(entity, relativePos, provider) : null;
-	}
+    @Override
+    public Object getEntityMetadata(String key, Entity entity, Vec3 relativePos) {
+        Map<String, IEntityMetaProvider<?>> providers = getProviders(entity);
 
-	@Override
-	public Set<String> getKeys(Entity target) {
-		return ImmutableSet.copyOf(getProviders(target).keySet());
-	}
+        IEntityMetaProvider<?> provider = providers.get(key);
+        return provider != null ? getProperty(entity, relativePos, provider) : null;
+    }
 
-	@Override
-	public void register(IEntityMetaProvider<?> provider) {
-		MetaProvidersRegistry.ENITITES.addProvider(provider);
-	}
+    @Override
+    public Set<String> getKeys(Entity target) {
+        return ImmutableSet.copyOf(getProviders(target).keySet());
+    }
+
+    @Override
+    public void register(IEntityMetaProvider<?> provider) {
+        MetaProvidersRegistry.ENITITES.addProvider(provider);
+    }
 }

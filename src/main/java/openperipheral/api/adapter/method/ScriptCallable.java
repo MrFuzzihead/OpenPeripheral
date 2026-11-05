@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
 import openperipheral.api.adapter.Asynchronous;
 import openperipheral.api.adapter.IAdapter;
 
@@ -31,22 +32,24 @@ import openperipheral.api.adapter.IAdapter;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ScriptCallable {
-	public static final String USE_METHOD_NAME = "[none set]";
 
-	/**
-	 * Name visible in Lua. Default will use Java name. More names can be defined with {@link Alias}
-	 */
-	String name() default USE_METHOD_NAME;
+    public static final String USE_METHOD_NAME = "[none set]";
 
-	String description() default "";
+    /**
+     * Name visible in Lua. Default will use Java name. More names can be defined with {@link Alias}
+     */
+    String name() default USE_METHOD_NAME;
 
-	/**
-	 * List of types expected to be returned from call. Empty list marks no results. Using {@link ReturnType#VOID} in this list will cause error
-	 */
-	ReturnType[] returnTypes() default {};
+    String description() default "";
 
-	/**
-	 * Should return values be validated using types from {@link #returnTypes()}
-	 */
-	boolean validateReturn() default true;
+    /**
+     * List of types expected to be returned from call. Empty list marks no results. Using {@link ReturnType#VOID} in
+     * this list will cause error
+     */
+    ReturnType[] returnTypes() default {};
+
+    /**
+     * Should return values be validated using types from {@link #returnTypes()}
+     */
+    boolean validateReturn() default true;
 }

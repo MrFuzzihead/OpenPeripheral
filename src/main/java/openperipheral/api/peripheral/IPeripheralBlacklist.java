@@ -9,9 +9,9 @@ import openperipheral.api.IApiInterface;
  */
 public interface IPeripheralBlacklist extends IApiInterface {
 
-	public void addToBlacklist(Class<?> cls);
+    public void addToBlacklist(Class<?> cls);
 
-	public void addToBlacklist(String clsName);
+    public void addToBlacklist(String clsName);
 
-	public boolean isBlacklisted(Class<?> cls);
+    public boolean isBlacklisted(Class<?> cls);
 }

@@ -12,19 +12,20 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ScriptStruct {
-	public static enum Output {
-		/**
-		 * Returned value will be map with named fields
-		 */
-		OBJECT,
-		/**
-		 * Returned value will be table/array with indexed fields
-		 */
-		TABLE;
-	}
 
-	/**
-	 * Defines representation on script side
-	 */
-	public Output defaultOutput() default Output.OBJECT;
+    public static enum Output {
+        /**
+         * Returned value will be map with named fields
+         */
+        OBJECT,
+        /**
+         * Returned value will be table/array with indexed fields
+         */
+        TABLE;
+    }
+
+    /**
+     * Defines representation on script side
+     */
+    public Output defaultOutput() default Output.OBJECT;
 }

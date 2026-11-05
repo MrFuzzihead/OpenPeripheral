@@ -1,5 +1,7 @@
 package openperipheral.interfaces.cc;
 
+import org.apache.logging.log4j.Level;
+
 import dan200.computercraft.api.lua.ILuaContext;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import openmods.Log;
@@ -10,105 +12,103 @@ import openperipheral.api.architecture.IArchitectureAccess;
 import openperipheral.api.converter.IConverter;
 import openperipheral.api.helpers.Index;
 import openperipheral.interfaces.cc.wrappers.LuaObjectWrapper;
-import org.apache.logging.log4j.Level;
 
 public class ComputerCraftEnv {
 
-	private static class CCArchitecture implements IArchitecture {
-		private final IConverter converter;
+    private static class CCArchitecture implements IArchitecture {
 
-		public CCArchitecture(IConverter converter) {
-			this.converter = converter;
-		}
+        private final IConverter converter;
 
-		@Override
-		public String architecture() {
-			return Constants.ARCH_COMPUTER_CRAFT;
-		}
+        public CCArchitecture(IConverter converter) {
+            this.converter = converter;
+        }
 
-		@Override
-		public Object wrapObject(Object target) {
-			return LuaObjectWrapper.wrap(target);
-		}
+        @Override
+        public String architecture() {
+            return Constants.ARCH_COMPUTER_CRAFT;
+        }
 
-		@Override
-		public Index createIndex(int value) {
-			return Index.fromJava(value, 1);
-		}
+        @Override
+        public Object wrapObject(Object target) {
+            return LuaObjectWrapper.wrap(target);
+        }
 
-		@Override
-		public IConverter getConverter() {
-			return converter;
-		}
-	}
+        @Override
+        public Index createIndex(int value) {
+            return Index.fromJava(value, 1);
+        }
 
-	private static class CCArchitectureAccess extends CCArchitecture implements IArchitectureAccess {
-		private final IComputerAccess access;
+        @Override
+        public IConverter getConverter() {
+            return converter;
+        }
+    }
 
-		public CCArchitectureAccess(IComputerAccess access, IConverter converter) {
-			super(converter);
-			this.access = access;
-		}
+    private static class CCArchitectureAccess extends CCArchitecture implements IArchitectureAccess {
 
-		@Override
-		public String callerName() {
-			return Integer.toString(access.getID());
-		}
+        private final IComputerAccess access;
 
-		@Override
-		public String peripheralName() {
-			return access.getAttachmentName();
-		}
+        public CCArchitectureAccess(IComputerAccess access, IConverter converter) {
+            super(converter);
+            this.access = access;
+        }
 
-		@Override
-		public boolean canSignal() {
-			try {
-				// this should throw if peripheral isn't attached
-				access.getAttachmentName();
-				return true;
-			} catch (Exception e) {
-				return false;
-			}
-		}
+        @Override
+        public String callerName() {
+            return Integer.toString(access.getID());
+        }
 
-		@Override
-		public boolean signal(String name, Object... args) {
-			try {
-				access.queueEvent(name, args);
-				return true;
-			} catch (Exception e) {
-				Log.log(Level.DEBUG, e, "Failed to send signal: %s", name);
-			}
-			return false;
-		}
-	}
+        @Override
+        public String peripheralName() {
+            return access.getAttachmentName();
+        }
 
-	private final IConverter converter;
+        @Override
+        public boolean canSignal() {
+            try {
+                // this should throw if peripheral isn't attached
+                access.getAttachmentName();
+                return true;
+            } catch (Exception e) {
+                return false;
+            }
+        }
 
-	public ComputerCraftEnv(IConverter converter) {
-		this.converter = converter;
-	}
+        @Override
+        public boolean signal(String name, Object... args) {
+            try {
+                access.queueEvent(name, args);
+                return true;
+            } catch (Exception e) {
+                Log.log(Level.DEBUG, e, "Failed to send signal: %s", name);
+            }
+            return false;
+        }
+    }
 
-	public IArchitectureAccess createAccess(final IComputerAccess access) {
-		return new CCArchitectureAccess(access, converter);
-	}
+    private final IConverter converter;
 
-	private IMethodCall addCommonArgs(IMethodCall call, ILuaContext context) {
-		return call
-				.setEnv(Constants.ARG_CONVERTER, converter)
-				.setEnv(Constants.ARG_CONTEXT, context);
-	}
+    public ComputerCraftEnv(IConverter converter) {
+        this.converter = converter;
+    }
 
-	public IMethodCall addObjectArgs(IMethodCall call, ILuaContext context) {
-		return addCommonArgs(call, context)
-				.setEnv(Constants.ARG_ARCHITECTURE, new CCArchitecture(converter));
-	}
+    public IArchitectureAccess createAccess(final IComputerAccess access) {
+        return new CCArchitectureAccess(access, converter);
+    }
 
-	public IMethodCall addPeripheralArgs(IMethodCall call, IComputerAccess access, ILuaContext context) {
-		final CCArchitectureAccess wrapper = new CCArchitectureAccess(access, converter);
-		return addCommonArgs(call, context)
-				.setEnv(Constants.ARG_ARCHITECTURE, wrapper)
-				.setEnv(Constants.ARG_ACCESS, wrapper)
-				.setEnv(Constants.ARG_COMPUTER, access);
-	}
+    private IMethodCall addCommonArgs(IMethodCall call, ILuaContext context) {
+        return call.setEnv(Constants.ARG_CONVERTER, converter)
+            .setEnv(Constants.ARG_CONTEXT, context);
+    }
+
+    public IMethodCall addObjectArgs(IMethodCall call, ILuaContext context) {
+        return addCommonArgs(call, context).setEnv(Constants.ARG_ARCHITECTURE, new CCArchitecture(converter));
+    }
+
+    public IMethodCall addPeripheralArgs(IMethodCall call, IComputerAccess access, ILuaContext context) {
+        final CCArchitectureAccess wrapper = new CCArchitectureAccess(access, converter);
+        return addCommonArgs(call, context).setEnv(Constants.ARG_ARCHITECTURE, wrapper)
+            .setEnv(Constants.ARG_ACCESS, wrapper)
+            .setEnv(Constants.ARG_COMPUTER, access);
+    }
 }

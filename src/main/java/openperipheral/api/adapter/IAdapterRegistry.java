@@ -9,14 +9,15 @@ package openperipheral.api.adapter;
  *
  */
 public interface IAdapterRegistry<T extends IAdapter> {
-	/**
-	 * Register external adapter
-	 */
-	public boolean register(T adapter);
 
-	/**
-	 * @deprecated Previously used for forcing adapter creation
-	 */
-	@Deprecated
-	public void registerInline(Class<?> cls);
+    /**
+     * Register external adapter
+     */
+    public boolean register(T adapter);
+
+    /**
+     * @deprecated Previously used for forcing adapter creation
+     */
+    @Deprecated
+    public void registerInline(Class<?> cls);
 }

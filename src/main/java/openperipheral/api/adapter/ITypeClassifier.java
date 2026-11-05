@@ -1,6 +1,7 @@
 package openperipheral.api.adapter;
 
 import java.lang.reflect.Type;
+
 import openperipheral.api.IApiInterface;
 import openperipheral.api.adapter.method.ArgType;
 
@@ -11,19 +12,21 @@ import openperipheral.api.adapter.method.ArgType;
  */
 public interface ITypeClassifier extends IApiInterface {
 
-	public interface IClassClassifier {
-		public IScriptType classify(ITypeClassifier classifier, Class<?> cls);
-	}
+    public interface IClassClassifier {
 
-	public interface IGenericClassifier {
-		public IScriptType classify(ITypeClassifier classifier, Type type);
-	}
+        public IScriptType classify(ITypeClassifier classifier, Class<?> cls);
+    }
 
-	public void registerClassifier(IClassClassifier qualifier);
+    public interface IGenericClassifier {
 
-	public void registerClassifier(IGenericClassifier qualifier);
+        public IScriptType classify(ITypeClassifier classifier, Type type);
+    }
 
-	public void registerType(Class<?> cls, IScriptType type);
+    public void registerClassifier(IClassClassifier qualifier);
 
-	public IScriptType classifyType(Type type);
+    public void registerClassifier(IGenericClassifier qualifier);
+
+    public void registerType(Class<?> cls, IScriptType type);
+
+    public IScriptType classifyType(Type type);
 }
