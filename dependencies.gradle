@@ -34,5 +34,8 @@
  * For more details, see https://docs.gradle.org/8.0.1/userguide/java_library_plugin.html#sec:java_library_configurations_graph
  */
 dependencies {
-    //runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.7.69-GTNH:dev")
+    runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.9.0-GTNH:dev")
+
+    api("com.github.MrFuzzihead:Computercraft-Legacy:3.2.0:dev")
+    api("com.github.GTNewHorizons:OpenModsLib:0.11.0:dev")
 }
