@@ -62,19 +62,27 @@ public class LuaObjectWrapper {
         @Override
         public Object[] callMethod(final ILuaContext context, final int index, final Object[] arguments)
             throws LuaException, InterruptedException {
+            final Object result = callMethodResult(context, index, arguments);
+            if (result instanceof Object[]) return (Object[]) result;
+            // Legacy entrypoint: a single MethodResult is understood by the bridge as "suspend"
+            return new Object[] { result };
+        }
+
+        @Override
+        public Object callMethodResult(final ILuaContext context, final int index, final Object[] arguments)
+            throws LuaException, InterruptedException {
             final IMethodExecutor method = methods.getMethod(index);
             Preconditions.checkNotNull(method, "Invalid method index: %d", index);
 
             if (method.isAsynchronous()) return call(index, method, context, arguments);
             else {
-                Object[] result = SynchronousExecutor.executeInMainThread(context, new SynchronousExecutor.Task() {
+                return SynchronousExecutor.executeInMainThread(context, new SynchronousExecutor.Task() {
 
                     @Override
                     public Object[] execute() throws LuaException, InterruptedException {
                         return call(index, method, context, arguments);
                     }
                 });
-                return result;
             }
         }
     }

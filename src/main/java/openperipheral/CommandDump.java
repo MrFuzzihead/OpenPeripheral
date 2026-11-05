@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -140,7 +141,12 @@ public class CommandDump extends SidedCommand {
     }
 
     @Override
-    public List<?> addTabCompletionOptions(ICommandSender icommandsender, String[] astring) {
+    public List<String> getCommandAliases() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<String> addTabCompletionOptions(ICommandSender icommandsender, String[] astring) {
         if (astring.length == 1) return Lists.newArrayList("xml", "xhtml");
         return null;
     }

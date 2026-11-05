@@ -113,6 +113,18 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral {
     @Override
     public Object[] callMethod(final IComputerAccess computer, final ILuaContext context, final int index,
         final Object[] arguments) throws LuaException, InterruptedException {
+        return toLegacyResult(callMethodResult(computer, context, index, arguments));
+    }
+
+    private static Object[] toLegacyResult(Object result) {
+        if (result instanceof Object[]) return (Object[]) result;
+        // Legacy entrypoint: a single MethodResult is understood by the bridge as "suspend"
+        return new Object[] { result };
+    }
+
+    @Override
+    public Object callMethodResult(final IComputerAccess computer, final ILuaContext context, final int index,
+        final Object[] arguments) throws LuaException, InterruptedException {
         // this should throw if peripheral isn't attached
         computer.getAttachmentName();
 
@@ -150,14 +162,13 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral {
         } else {
             if (method.isAsynchronous()) return executeCall(preparedCall, index, arguments);
             else {
-                Object[] results = SynchronousExecutor.executeInMainThread(context, new SynchronousExecutor.Task() {
+                return SynchronousExecutor.executeInMainThread(context, new SynchronousExecutor.Task() {
 
                     @Override
                     public Object[] execute() throws LuaException, InterruptedException {
                         return executeCall(preparedCall, index, arguments);
                     }
                 });
-                return results;
             }
         }
     }

@@ -1,90 +1,51 @@
 package openperipheral.interfaces.cc;
 
-import com.google.common.base.Throwables;
-
 import dan200.computercraft.api.lua.ILuaContext;
 import dan200.computercraft.api.lua.ILuaTask;
 import dan200.computercraft.api.lua.LuaException;
+import dan200.computercraft.api.lua.MethodResult;
 import openperipheral.adapter.AdapterLogicException;
 
-// CC still needs it, since default .executeInMainThread() incorrectly converts ILuaObjects
+// CC no longer allows API methods to block (no more ILuaContext.pullEvent), since a blocked call
+// would also block the task that delivers the event it waits for. A "synchronous" call is now
+// expressed as a MethodResult: the task is queued on the main thread and the Lua call is suspended
+// until the matching 'task_complete' event arrives.
 public class SynchronousExecutor {
 
-    public static final Object[] DUMMY = new Object[0];
+    private static final String TASK_COMPLETE_EVENT = "task_complete";
 
     public interface Task {
 
         public Object[] execute() throws LuaException, InterruptedException;
     }
 
-    private static class Responder implements ILuaTask {
+    private static class TaskAdapter implements ILuaTask {
 
-        private static final String CALLBACK_EVENT_ID = "task_complete";
-        private final ILuaContext context;
         private final Task task;
-        private boolean nobodyLovesMe;
-        public Throwable error;
-        public Object[] result;
 
-        public Responder(ILuaContext context, Task task) {
-            this.context = context;
+        public TaskAdapter(Task task) {
             this.task = task;
         }
 
-        public void waitForEvent(long transactionId) throws LuaException, InterruptedException {
-            while (!nobodyLovesMe) {
-                final Object[] result;
-                try {
-                    // internal CC event
-                    result = context.pullEvent(CALLBACK_EVENT_ID);
-                } catch (LuaException e) {
-                    nobodyLovesMe = true;
-                    throw e;
-                } catch (InterruptedException e) {
-                    nobodyLovesMe = true;
-                    throw e;
-                } catch (Throwable t) {
-                    nobodyLovesMe = true;
-                    throw Throwables.propagate(t);
-                }
-
-                if (!result[0].equals(CALLBACK_EVENT_ID))
-                    throw new LuaException("pullEvent failed, expected '" + CALLBACK_EVENT_ID + "', got: " + result[0]);
-
-                long receivedTransactionId = ((Number) result[1]).longValue();
-                if (transactionId == receivedTransactionId) {
-                    boolean success = ((Boolean) result[2]);
-                    if (!success) throw new LuaException(String.valueOf(result[3]));
-                    break;
-                }
-            }
-        }
-
         @Override
-        public Object[] execute() {
+        public Object[] execute() throws LuaException {
             try {
-                result = task.execute();
-            } catch (Throwable e) {
-                error = e;
+                return task.execute();
+            } catch (LuaException e) {
+                throw e;
+            } catch (Throwable t) {
+                // Result types are converted by the Lua bridge, so only failures need rewriting here
+                throw new LuaException(AdapterLogicException.getMessageForThrowable(t));
             }
-
-            return DUMMY;
         }
     }
 
-    public static Object[] executeInMainThread(ILuaContext context, Task task)
-        throws LuaException, InterruptedException {
-        final Responder responder = new Responder(context, task);
-        long taskId = context.issueMainThreadTask(responder);
-
-        responder.waitForEvent(taskId);
-
-        // This code was executed in main thread, so there are no special exceptions we need to pass
-        final Throwable error = responder.error;
-        if (error != null) {
-            if (error instanceof LuaException) throw (LuaException) error;
-            else throw new LuaException(AdapterLogicException.getMessageForThrowable(error));
-        }
-        return responder.result;
+    /**
+     * Queues the task on the main thread and returns a result that suspends the current Lua call
+     * until the task completes. Task failures are re-raised as {@link LuaException} in Lua.
+     */
+    public static MethodResult executeInMainThread(ILuaContext context, Task task) throws LuaException {
+        final long taskId = context.issueMainThreadTask(new TaskAdapter(task));
+        return MethodResult.task(TASK_COMPLETE_EVENT, taskId);
     }
 }
