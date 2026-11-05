@@ -39,4 +39,11 @@ dependencies {
     api("com.github.MrFuzzihead:Computercraft-Legacy:3.2.0:dev")
     api("com.github.GTNewHorizons:OpenModsLib:0.11.0:dev")
     compileOnly("com.github.GTNewHorizons:OpenComputers:1.13.0-GTNH:dev")
+
+    // src/test uses JUnit 4 + the Mockito 1.x API (org.mockito.Matchers, InvocationOnMock#getArgumentAt)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:1.10.19")
+
+    // OpenComputers is compileOnly for the mod itself, but the tests exercise the OC adapter directly
+    testImplementation("com.github.GTNewHorizons:OpenComputers:1.13.0-GTNH:dev")
 }

@@ -1,6 +1,6 @@
 // Extra build logic, applied on top of build.gradle.kts (see dependencies.gradle for the main dependency list).
 // Accessors such as testImplementation(...) are not generated for addon scripts, so configurations are
-// addressed by name.
+// addressed by name when needed.
 
 import org.gradle.api.artifacts.ModuleDependency
 import org.gradle.api.tasks.testing.Test
@@ -8,15 +8,6 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JavaToolchainService
 
 import com.gtnewhorizons.retrofuturagradle.MinecraftExtension
-
-dependencies {
-    // src/test uses JUnit 4 + the Mockito 1.x API (org.mockito.Matchers, InvocationOnMock#getArgumentAt)
-    add("testImplementation", "junit:junit:4.13.2")
-    add("testImplementation", "org.mockito:mockito-core:1.10.19")
-
-    // OpenComputers is compileOnly for the mod itself, but the tests exercise the OC adapter directly
-    add("testImplementation", "com.github.GTNewHorizons:OpenComputers:1.13.0-GTNH:dev")
-}
 
 // Mockito 1.x generates mocks with a shaded cglib, which only works up to Java 8. The mod targets Java 8
 // anyway, so run the tests on a Java 8 toolchain instead of the Gradle daemon's JVM.
@@ -52,5 +43,20 @@ afterEvaluate {
         injectedTags.put("OP_API_VERSION", opApiVersion)
         injectedTags.put("OPENMODS_LIB_VERSION", openModsLibVersion)
         injectedTags.put("OPENMODS_LIB_NEXT_VERSION", nextMinorVersion(openModsLibVersion))
+    }
+}
+
+// ComputerCraft 3.2.0 declares `required-after:lwjgl3ify` in its mcmod.info, and lwjgl3ify needs a modern
+// JVM. GTNHGradle's plain runServer/runClient use the Java 8 toolchain and carry no lwjgl3ify on the
+// classpath, so they die at MissingModsException before the game starts. Forward them to the modern variants
+// (which GTNHGradle wires to lwjgl3ify and a Java 17+/21/25 JVM), so both `./gradlew runClient`/`runServer`
+// and CI's server smoke test keep working.
+mapOf("runServer" to "runServer25", "runClient" to "runClient25").forEach { (plain, modern) ->
+    tasks.matching { it.name == plain }.configureEach {
+        if (project.tasks.names.contains(modern)) {
+            description = "Alias for $modern - ComputerCraft 3.2.0 requires lwjgl3ify, which needs Java 17+"
+            dependsOn(modern)
+            onlyIf("the plain task forwards to $modern") { false }
+        }
     }
 }
