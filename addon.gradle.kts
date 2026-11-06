@@ -23,7 +23,7 @@ tasks.withType(Test::class.java).configureEach {
 // Unsubstituted placeholders end up in the @Mod annotation, which makes FML reject the OpenMods version range.
 val opApiVersion = (findProperty("opApiVersion") as String?) ?: "3.4.2"
 
-/** "0.11.0" -> "0.12.0", i.e. the exclusive upper bound used by the FML "required-after" range. */
+/** "0.10.15" -> "0.11.0", i.e. the exclusive upper bound used by the FML "required-after" range. */
 fun nextMinorVersion(version: String): String {
     val parts = version.split('.')
     val major = parts.getOrNull(0) ?: "0"
