@@ -36,7 +36,7 @@
 dependencies {
     runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.9.0-GTNH:dev")
 
-    api("com.github.MrFuzzihead:Computercraft-Legacy:3.2.0:dev")
+    api("com.github.MrFuzzihead:Computercraft-Legacy:3.3.0:dev")
     // GTNH keeps OpenModsLib at 0.10.x ("NEVER LET IT GO ABOVE 0.10.x", other mods break on 0.11).
     // Building against 0.11.0 makes FML require OpenMods [0.11.0,0.12.0) and the mod refuses to
     // start in packs shipping 0.10.15. 0.10.15 and 0.11.0 are the same commit, so 0.10.15 is safe.
