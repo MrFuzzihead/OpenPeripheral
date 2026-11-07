@@ -14,6 +14,7 @@ import com.google.common.collect.Sets;
 
 import dan200.computercraft.api.peripheral.IPeripheral;
 import dan200.computercraft.api.peripheral.IPeripheralProvider;
+import dan200.computercraft.api.peripheral.IPeripheralTargeted;
 import openmods.Log;
 import openmods.reflection.ReflectionHelper;
 import openmods.utils.CachedFactory;
@@ -75,6 +76,7 @@ public class PeripheralProvider implements IPeripheralProvider {
         final Set<Class<?>> interfaces = Sets.newHashSet(proxyClasses);
         interfaces.add(IPeripheral.class);
         interfaces.add(IOpenPeripheral.class);
+        interfaces.add(IPeripheralTargeted.class);
         return interfaces;
     }
 

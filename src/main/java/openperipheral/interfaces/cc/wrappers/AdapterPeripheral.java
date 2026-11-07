@@ -13,6 +13,7 @@ import dan200.computercraft.api.lua.ILuaTask;
 import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
+import dan200.computercraft.api.peripheral.IPeripheralTargeted;
 import openmods.Log;
 import openmods.utils.CachedFactory;
 import openperipheral.adapter.AdapterLogicException;
@@ -31,7 +32,7 @@ import openperipheral.interfaces.cc.SynchronousExecutor;
 import openperipheral.interfaces.cc.UtilsResourceMount;
 import openperipheral.util.DocUtils;
 
-public class AdapterPeripheral implements IPeripheral, IOpenPeripheral {
+public class AdapterPeripheral implements IPeripheral, IOpenPeripheral, IPeripheralTargeted {
 
     private static final String MOUNT_NAME = "openp";
     private static final IMount MOUNT = new UtilsResourceMount();
@@ -61,6 +62,11 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral {
     @Override
     public String getType() {
         return type;
+    }
+
+    @Override
+    public Object getTarget() {
+        return target;
     }
 
     @Override
