@@ -44,6 +44,16 @@ public class MethodDeclarationExtraTest {
         public String env(@Env(Constants.ARG_CONTEXT) Object context, @Arg(name = "value") String value) {
             return value;
         }
+
+        @ScriptCallable(returnTypes = ReturnType.STRING)
+        public String varargs(@Arg(name = "values") String... values) {
+            return java.util.Arrays.toString(values);
+        }
+
+        @ScriptCallable(returnTypes = ReturnType.STRING)
+        public String nullableVarargs(@Arg(name = "values", isNullable = true) String... values) {
+            return java.util.Arrays.toString(values);
+        }
     }
 
     private static MethodDeclaration declaration(String name) throws Exception {
@@ -56,6 +66,7 @@ public class MethodDeclarationExtraTest {
         if ("optional".equals(name)) return new Class<?>[] { String.class };
         if ("duplicateOptionals".equals(name)) return new Class<?>[] { String.class, String.class };
         if ("env".equals(name)) return new Class<?>[] { Object.class, String.class };
+        if ("varargs".equals(name) || "nullableVarargs".equals(name)) return new Class<?>[] { String[].class };
         return new Class<?>[0];
     }
 
@@ -90,6 +101,20 @@ public class MethodDeclarationExtraTest {
     @Test(expected = MethodDeclaration.ArgumentDefinitionException.class)
     public void duplicateOptionalsAreRejected() throws Exception {
         declaration("duplicateOptionals");
+    }
+
+    @Test
+    public void varargsConsumesRemainingArguments() throws Exception {
+        final MethodDeclaration declaration = declaration("varargs");
+        Assert.assertArrayEquals(new Object[] { "[a, b]" }, call(declaration, new Methods(), "a", "b"));
+    }
+
+    @Test
+    public void nullableVarargsAcceptsNilElements() throws Exception {
+        final MethodDeclaration declaration = declaration("nullableVarargs");
+        Assert.assertArrayEquals(
+            new Object[] { "[a, null]" },
+            call(declaration, new Methods(), (Object[]) new Object[] { "a", null }));
     }
 
     @Test

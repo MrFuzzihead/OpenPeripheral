@@ -9,9 +9,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
@@ -24,6 +26,7 @@ import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLLoadCompleteEvent;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
+import dan200.computercraft.ComputerCraft;
 import dan200.computercraft.api.filesystem.IMount;
 import dan200.computercraft.api.filesystem.IWritableMount;
 import dan200.computercraft.api.lua.ILuaContext;
@@ -32,6 +35,7 @@ import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.lua.MethodResult;
 import dan200.computercraft.api.peripheral.IComputerAccess;
 import dan200.computercraft.api.peripheral.IPeripheral;
+import dan200.computercraft.shared.computer.blocks.TileComputer;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
 import dan200.computercraft.shared.computer.core.ServerComputer;
 import openmods.Log;
@@ -49,7 +53,12 @@ import openperipheral.api.architecture.IArchitectureChecker;
 import openperipheral.api.architecture.IFeatureGroupManager;
 import openperipheral.api.converter.IConverterManager;
 import openperipheral.api.meta.IEntityMetaBuilder;
+import openperipheral.api.meta.IEntityMetaProvider;
+import openperipheral.api.meta.IEntityPartialMetaBuilder;
 import openperipheral.api.meta.IItemStackMetaBuilder;
+import openperipheral.api.meta.IItemStackMetaProvider;
+import openperipheral.api.meta.IItemStackPartialMetaBuilder;
+import openperipheral.api.meta.IMetaProviderProxy;
 import openperipheral.api.peripheral.IPeripheralBlacklist;
 import openperipheral.interfaces.cc.providers.PeripheralProvider;
 
@@ -286,8 +295,10 @@ public class GameTestMod {
         check(ApiAccess.getApi(IPeripheralTypeProvider.class) != null, "IPeripheralTypeProvider API is missing");
 
         testProviderAndAdapter(world);
+        testBlockComputerDiscovery(world);
         testInlinePropertyObject();
         testRealItemAndEntityMetadata(world, itemMeta);
+        testMetadataProxies(world, itemMeta, ApiAccess.getApi(IEntityMetaBuilder.class));
         testBlacklist(world);
         testCommandDump(server);
         return world;
@@ -342,6 +353,33 @@ public class GameTestMod {
         peripheral.detach(access);
     }
 
+    private static void testBlockComputerDiscovery(World world) {
+        final int x = 1;
+        final int y = 100;
+        final int z = 0;
+
+        world.setBlock(x, y, z, ComputerCraft.Blocks.computer, 0, 3);
+        final TileEntity tile = world.getTileEntity(x, y, z);
+        check(tile instanceof TileComputer, "Computer TE was not created: " + tile);
+
+        final TileComputer computerTile = (TileComputer) tile;
+        computerTile.updateEntity();
+        computerTile.updateInput();
+
+        final ServerComputer computer = computerTile.getServerComputer();
+        check(computer != null, "Computer did not create a ServerComputer");
+
+        boolean found = false;
+        for (int side = 0; side < 6; side++) {
+            if (computer.getPeripheral(side) != null) {
+                found = true;
+                break;
+            }
+        }
+        check(found, "Computer block did not discover the adjacent chest peripheral");
+        Log.info("GAMETEST_BLOCK_COMPUTER_OK");
+    }
+
     private static void testInlinePropertyObject() throws Exception {
         final InlinePropertyObject target = new InlinePropertyObject();
         final IPeripheral peripheral = PeripheralProvider.createAdaptedPeripheralWrapped(target);
@@ -374,6 +412,115 @@ public class GameTestMod {
         check(entityMeta != null, "Entity metadata is null");
         check(entityMeta.get("id") != null, "Entity metadata is missing id");
         check(entityMeta.get("name") != null, "Entity metadata is missing name");
+    }
+
+    private static void testMetadataProxies(World world, IItemStackMetaBuilder itemBuilder,
+        IEntityMetaBuilder entityBuilder) {
+        final ItemStack stack = new ItemStack(Items.diamond, 4);
+        final IItemStackPartialMetaBuilder itemPartial = (IItemStackPartialMetaBuilder) itemBuilder;
+
+        check(
+            itemPartial.getBasicItemStackMetadata(stack)
+                .get("id") != null,
+            "Basic item metadata is missing id");
+        check(itemPartial.getKeys(stack) != null, "Item provider keys are null");
+
+        final IMetaProviderProxy itemProxy = itemPartial.createProxy(stack);
+        check(itemProxy != null, "Item metadata proxy is null");
+        check(
+            itemProxy.basic()
+                .get("id") != null,
+            "Item proxy basic metadata is missing id");
+        check(
+            itemProxy.all()
+                .get("qty") != null,
+            "Item proxy all metadata is missing qty");
+        check(itemProxy.keys() != null, "Item proxy keys are null");
+        check(
+            itemProxy.select("id")
+                .get("id") != null,
+            "Item proxy select lookup failed");
+
+        itemBuilder.register(new IItemStackMetaProvider<Item>() {
+
+            @Override
+            public Class<? extends Item> getTargetClass() {
+                return Item.class;
+            }
+
+            @Override
+            public String getKey() {
+                return "gametest_item_meta";
+            }
+
+            @Override
+            public Object getMeta(Item target, ItemStack stack) {
+                return "item-meta";
+            }
+        });
+        check(
+            "item-meta".equals(
+                itemBuilder.getItemStackMetadata(stack)
+                    .get("gametest_item_meta")),
+            "Registered item provider was not used");
+        check(
+            itemPartial.getKeys(stack)
+                .contains("gametest_item_meta"),
+            "Registered item provider key is missing");
+
+        final IMetaProviderProxy itemProxyWithCustom = itemPartial.createProxy(stack);
+        check(
+            "item-meta".equals(itemProxyWithCustom.single("gametest_item_meta")),
+            "Item proxy did not expose the registered provider");
+        check(
+            itemProxyWithCustom.keys()
+                .contains("gametest_item_meta"),
+            "Item proxy keys did not include the registered provider");
+
+        final IEntityPartialMetaBuilder entityPartial = (IEntityPartialMetaBuilder) entityBuilder;
+        final EntityItem entity = new EntityItem(world, 0.5, 101, 0.5, stack.copy());
+        check(world.spawnEntityInWorld(entity), "Could not spawn metadata proxy entity");
+
+        check(
+            entityPartial.getBasicEntityMetadata(entity, null)
+                .get("id") != null,
+            "Basic entity metadata is missing id");
+        final IMetaProviderProxy entityProxy = entityPartial.createProxy(entity, null);
+        check(entityProxy != null, "Entity metadata proxy is null");
+        check(
+            entityProxy.basic()
+                .get("id") != null,
+            "Entity proxy basic metadata is missing id");
+        check(
+            entityProxy.all()
+                .get("name") != null,
+            "Entity proxy all metadata is missing name");
+        check(entityProxy.keys() != null, "Entity proxy keys is null");
+        entityProxy.select("name");
+
+        entityBuilder.register(new IEntityMetaProvider<Entity>() {
+
+            @Override
+            public Class<? extends Entity> getTargetClass() {
+                return Entity.class;
+            }
+
+            @Override
+            public String getKey() {
+                return "gametest_entity_meta";
+            }
+
+            @Override
+            public Object getMeta(Entity target, net.minecraft.util.Vec3 relativePos) {
+                return "entity-meta";
+            }
+        });
+        check(
+            "entity-meta".equals(
+                entityBuilder.getEntityMetadata(entity, null)
+                    .get("gametest_entity_meta")),
+            "Registered entity provider was not used");
+        Log.info("GAMETEST_METADATA_PROXY_OK");
     }
 
     private static void testBlacklist(World world) {

@@ -4,11 +4,31 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import openperipheral.adapter.types.IntegerRange;
+import openperipheral.adapter.types.TypeHelper;
+import openperipheral.api.adapter.method.ArgType;
 
 public class MiscTests {
 
     private static void testRange(String expected, IntegerRange range) {
         Assert.assertEquals(expected, range.describe());
+    }
+
+    @Test
+    public void tupleAndVoidTypes() {
+        Assert.assertEquals(
+            "()",
+            TypeHelper.createFromArg(java.util.Collections.<ArgType>emptyList())
+                .describe());
+        Assert.assertEquals(
+            "(string,number)",
+            TypeHelper.create(ArgType.STRING, ArgType.NUMBER)
+                .describe());
+        Assert.assertTrue(TypeHelper.isVoid(TypeHelper.createFromArg(java.util.Collections.<ArgType>emptyList())));
+        Assert.assertFalse(TypeHelper.isVoid(TypeHelper.create(ArgType.STRING)));
+        Assert
+            .assertTrue(TypeHelper.compareTypes(TypeHelper.create(ArgType.STRING), TypeHelper.single(ArgType.STRING)));
+        Assert
+            .assertFalse(TypeHelper.compareTypes(TypeHelper.create(ArgType.STRING), TypeHelper.single(ArgType.NUMBER)));
     }
 
     @Test

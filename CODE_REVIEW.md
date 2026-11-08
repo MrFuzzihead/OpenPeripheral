@@ -13,8 +13,8 @@ The companion changes are in the working tree; run `git diff` for the exact patc
 * **Dependencies were brought up to the newest versions that are compatible with a 1.7.10 / Java 8 mod.**
   ComputerCraft-Legacy 3.3.1, NotEnoughItems 2.9.2-GTNH, GTNH settings convention 2.0.34, Mockito 4.11.0,
   JaCoCo 0.8.16. OpenModsLib stays at 0.10.15 on purpose (see §2).
-* **The unit-test suite grew from 109 tests in 11 classes to 300 tests in 29 classes.**
-  Line coverage is **72.4 %**, branch coverage **64.2 %** (JaCoCo 0.8.16). The build now enforces a
+* **The unit-test suite grew from 109 tests in 11 classes to 310 tests in 33 classes.**
+  Line coverage is **74.4 %**, branch coverage **66.2 %** (JaCoCo 0.8.16). The build now enforces a
   65 % line / 50 % branch floor via `jacocoTestCoverageVerification`, wired into `check`.
 * **Headless boot tests now exist.** `runServer25 -PsmokeTest` and `runClient25 -PsmokeTest` boot the real
   game, wait for FML load-complete, then exit themselves. Both were run locally (server: pass, client: pass)
@@ -155,6 +155,10 @@ New test classes (in `src/test/java/openperipheral/tests`):
 | `ImcTest` | IMC `ignoreTileEntity` and `registerClassType` parsing, including malformed values. |
 | `SafePeripheralFactoryTest` | null tiles, stable broken-peripheral method names, placeholder factory. |
 | `ConfigGuiFactoryTest` | feature-group config element reads/writes the GUI's config copy. |
+| `TypeConvertersProviderTest` | per-architecture registration and fan-out of converters/ignored types. |
+| `CommandDumpTest` | command usage, aliases, tab completion, username index. |
+| `LuaReflectionHelperTest` | dev-only reflection methods and argument/env plumbing. |
+| `ConfigChangeListenerTest` | feature-group config changes are persisted to the config file. |
 
 The in-game suite (`src/gameTest/java/openperipheral/gametest/GameTestMod.java`) is separate from JaCoCo. It
 asserts:
@@ -163,9 +167,12 @@ asserts:
   a fake `IComputerAccess`/`ILuaContext` (including the `MethodResult` task-completion path).
 * A real `ServerComputer` running a generated `startup` Lua program that calls the peripheral, reads/writes a
   real `ItemStack`, and prints machine-checked markers.
+* A real placed `ComputerCraft.Blocks.computer` / `TileComputer`, including `updateInput()` discovering the
+  adjacent chest through `ComputerCraftAPI`'s peripheral provider chain.
 * Inline `@Property` get/set and `@ScriptCallable` methods on a plain object.
-* Live `IItemStackMetaBuilder`/`IEntityMetaBuilder` output, `IPeripheralBlacklist`/`TileEntityBlacklist`,
-  `/op_dump`, and the `ApiAccess` interfaces.
+* Live `IItemStackMetaBuilder`/`IEntityMetaBuilder` output and their partial builders/proxies, including
+  registered custom providers.
+* `IPeripheralBlacklist`/`TileEntityBlacklist`, `/op_dump`, and the `ApiAccess` interfaces.
 * The test mod runs assertions on a worker thread after `FMLServerStartedEvent`, so `SynchronousExecutor`'s
   main-thread tasks can execute while the server tick loop continues.
 
@@ -173,20 +180,19 @@ Coverage movement:
 
 | Counter | Before | After |
 |---|---:|---:|
-| Tests | 109 | **300** |
-| Test classes | 11 | **29** |
-| Instruction | 39.5 % | **71.2 %** |
-| Branch | 34.3 % | **64.2 %** |
-| Line | 40.9 % | **72.4 %** |
-| Method | 37.0 % | **71.4 %** |
-| Class | 51.3 % | **83.8 %** |
+| Tests | 109 | **310** |
+| Test classes | 11 | **33** |
+| Instruction | 39.5 % | **73.3 %** |
+| Branch | 34.3 % | **66.2 %** |
+| Line | 40.9 % | **74.4 %** |
+| Method | 37.0 % | **73.9 %** |
+| Class | 51.3 % | **84.9 %** |
 
 Coverage numbers refer to the JUnit suite. The in-game suite is pass/fail and intentionally not part of the
 JaCoCo counters; its assertions are listed above.
 
-Lowest-coverage remaining areas (good next targets): the client-only GUI screen factory, `ApiSetup`,
-`OpenPeripheralCore` event lifecycle, `ItemStackMetadataBuilder$Proxy`/partial-builder overloads,
-`LuaReflectionHelper` (dev-only), and the OC factory wrappers (OC is intentionally out of scope for now).
+Lowest-coverage remaining areas (good next targets): `ApiSetup`, `OpenPeripheralCore` event lifecycle,
+`SmokeTestHook`, and the OC factory wrappers (OC is intentionally out of scope for now).
 
 ---
 
@@ -341,8 +347,8 @@ requires a live Minecraft/GameRegistry environment to test properly.
 
 * **Client smoke test is non-blocking** because software OpenGL under Xvfb is environment-dependent. It
   still uploads logs and greps for markers; promote it to required once the runner image is known-good.
-* **`ItemStackMetadataBuilder$Proxy`/partial-builder methods** are not all exercised; the game test covers
-  the non-null `getItemStackMetadata` path and the unit tests cover the null/empty paths.
+* **`ItemStackMetadataBuilder`/`EntityMetadataBuilder` basic paths are covered in-game**, including proxies and
+  custom providers; only the client-side rendering of those values remains out of scope.
 * **Mockito 4 is the Java 8 ceiling.** If the test runtime is moved to Java 17 (the production class files
   still target Java 8), Mockito 5.24 and JUnit 5 can be adopted. That is a separate migration; the current
   setup deliberately exercises the Java 8 runtime.
@@ -352,9 +358,8 @@ requires a live Minecraft/GameRegistry environment to test properly.
 * **OpenComputers is intentionally excluded from the in-game suite.** Its unit/ASM coverage remains, but
   its runtime driver/injector path is not booted. Add OC to a future game-test runtime configuration when it
   becomes a priority.
-* **The in-game CC test uses a `ServerComputer` directly**, not a placed ComputerCraft block/TE. That covers
-  the real `Computer`/`PeripheralAPI`/`MethodResult` bridge; a block-level test can be added if ComputerCraft
-  changes its computer block internals.
+* **The in-game CC suite now covers both a direct `ServerComputer` and a placed `ComputerCraft.Blocks.computer`
+  / `TileComputer`.** If ComputerCraft changes its block internals, the block-level test is the canary.
 
 ---
 
