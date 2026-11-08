@@ -62,6 +62,8 @@ public class SignallingAndMetadataTest {
             Assert.assertTrue(
                 content.contains("\"updateUrl\": \"https://github.com/MrFuzzihead/OpenPeripheral/releases/latest\""));
             Assert.assertTrue(content.contains("\"modid\": \"OpenPeripheralCore\""));
+            Assert.assertTrue(content.contains("\"useDependencyInformation\": true"));
+            Assert.assertTrue(content.contains("\"requiredMods\": [\"OpenMods\"]"));
         }
     }
 

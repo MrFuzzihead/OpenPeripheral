@@ -1,6 +1,7 @@
 package openperipheral;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Collection;
@@ -76,9 +77,13 @@ public class CommandDump extends SidedCommand {
 
         try {
             final long start = System.currentTimeMillis();
-            File output = new File(filename);
-
-            if (!output.isAbsolute()) output = new File(OpenMods.proxy.getMinecraftDir(), filename);
+            final File output;
+            try {
+                output = resolveOutputFile(filename);
+            } catch (IOException e) {
+                sender.addChatMessage(new ChatComponentText("Invalid output path: " + filename));
+                return;
+            }
 
             final DocBuilder builder = new DocBuilder();
 
@@ -119,6 +124,20 @@ public class CommandDump extends SidedCommand {
             Log.warn(t, "Failed to execute dump command");
             sender.addChatMessage(new ChatComponentTranslation("openperipheralcore.dump.fail"));
         }
+    }
+
+    static File resolveOutputFile(String filename) throws IOException {
+        final File minecraftDir = OpenMods.proxy.getMinecraftDir();
+        final File requested = new File(filename);
+        final File output = requested.isAbsolute() ? requested : new File(minecraftDir, filename);
+
+        final String root = minecraftDir.getCanonicalPath();
+        final String resolved = output.getCanonicalPath();
+        if (!resolved.equals(root) && !resolved.startsWith(root + File.separator)) {
+            throw new IOException("Refusing to write outside the Minecraft directory");
+        }
+
+        return output;
     }
 
     private static String getCurrentTime() {

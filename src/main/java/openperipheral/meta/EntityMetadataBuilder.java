@@ -87,7 +87,8 @@ public class EntityMetadataBuilder implements IEntityPartialMetaBuilder {
         addPositionInfo(map, entity, relativePos);
         map.put("name", entity.getCommandSenderName());
         map.put("id", entity.getEntityId());
-        map.put("uuid", entity.getUniqueID());
+        final java.util.UUID uuid = entity.getUniqueID();
+        if (uuid != null) map.put("uuid", uuid);
 
         if (entity.riddenByEntity != null) {
             map.put("riddenBy", entity.riddenByEntity.getEntityId());

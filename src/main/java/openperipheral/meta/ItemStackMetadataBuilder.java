@@ -82,6 +82,14 @@ public class ItemStackMetadataBuilder implements IItemStackPartialMetaBuilder {
     static {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
         builder.put("id", "invalid");
+        builder.put("name", "?");
+        builder.put("mod_id", "?");
+        builder.put("display_name", "unknown");
+        builder.put("raw_name", "unknown");
+        builder.put("qty", 0);
+        builder.put("dmg", 0);
+        builder.put("max_dmg", 0);
+        builder.put("max_size", 0);
         NULL = builder.build();
     }
 

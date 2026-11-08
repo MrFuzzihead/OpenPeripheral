@@ -13,8 +13,8 @@ The companion changes are in the working tree; run `git diff` for the exact patc
 * **Dependencies were brought up to the newest versions that are compatible with a 1.7.10 / Java 8 mod.**
   ComputerCraft-Legacy 3.3.1, NotEnoughItems 2.9.2-GTNH, GTNH settings convention 2.0.34, Mockito 4.11.0,
   JaCoCo 0.8.16. OpenModsLib stays at 0.10.15 on purpose (see §2).
-* **The unit-test suite grew from 109 tests in 11 classes to 310 tests in 33 classes.**
-  Line coverage is **74.4 %**, branch coverage **66.2 %** (JaCoCo 0.8.16). The build now enforces a
+* **The unit-test suite grew from 109 tests in 11 classes to 320 tests in 34 classes.**
+  Line coverage is **74.4 %**, branch coverage **66.7 %** (JaCoCo 0.8.16). The build now enforces a
   65 % line / 50 % branch floor via `jacocoTestCoverageVerification`, wired into `check`.
 * **Headless boot tests now exist.** `runServer25 -PsmokeTest` and `runClient25 -PsmokeTest` boot the real
   game, wait for FML load-complete, then exit themselves. Both were run locally (server: pass, client: pass)
@@ -159,6 +159,7 @@ New test classes (in `src/test/java/openperipheral/tests`):
 | `CommandDumpTest` | command usage, aliases, tab completion, username index. |
 | `LuaReflectionHelperTest` | dev-only reflection methods and argument/env plumbing. |
 | `ConfigChangeListenerTest` | feature-group config changes are persisted to the config file. |
+| `CommandDumpPathTest` | dump output paths are confined to the Minecraft directory. |
 
 The in-game suite (`src/gameTest/java/openperipheral/gametest/GameTestMod.java`) is separate from JaCoCo. It
 asserts:
@@ -180,10 +181,10 @@ Coverage movement:
 
 | Counter | Before | After |
 |---|---:|---:|
-| Tests | 109 | **310** |
-| Test classes | 11 | **33** |
-| Instruction | 39.5 % | **73.3 %** |
-| Branch | 34.3 % | **66.2 %** |
+| Tests | 109 | **320** |
+| Test classes | 11 | **34** |
+| Instruction | 39.5 % | **73.5 %** |
+| Branch | 34.3 % | **66.7 %** |
 | Line | 40.9 % | **74.4 %** |
 | Method | 37.0 % | **73.9 %** |
 | Class | 51.3 % | **84.9 %** |
@@ -302,22 +303,12 @@ requires a live Minecraft/GameRegistry environment to test properly.
 
 ### 5.1 Conversion semantics
 
-* **`ConverterStringInbound` is a catch-all.** Any object (including a Lua table or list) can be converted
-  to `String` through `toString()`. This makes `f(String)` accept tables silently. Recommendation: restrict
-  the catch-all to `String`/`Number`/`Boolean`/`Character` and let tables fail with “no known conversion”.
 * **All outbound numbers become `double`.** `ConverterNumberOutbound` loses precision for `long` values
   above 2^53 and for some `BigDecimal`/`BigInteger` uses. This matches Lua 5.1 number semantics, but callers
   that round-trip 64-bit ids should be audited. Recommendation: keep `long` as a string for id-like values,
   or add an opt-in converter.
-* **Concrete collection types are partially supported.** `ConverterListInbound`/`MapInbound`/`SetInbound`
-  now accept `Collection`/`HashMap`/`HashSet` and any type assignable from those implementations, but not
-  `LinkedList`, `TreeMap`, `LinkedHashSet`, etc. Recommendation: instantiate the requested concrete type
-  reflectively when it has a no-arg constructor, and fall back to the interface implementation otherwise.
-* **No recursion/cycle detection in `TypeConverter`.** A custom converter that calls `registry.toJava()` on
-  the same value/type can loop forever. Recommendation: add a depth guard or a conversion context.
-* **`StructHandlerProvider` requires public fields and a public no-arg constructor.** `field.setAccessible`
-  is not called; private fields cannot be used. This is documented behaviour but worth making explicit in
-  the API Javadoc.
+* **`StructHandlerProvider` still requires a public no-arg constructor.** Fields (including private and
+  inherited fields) are now accessible, but the constructor requirement remains part of the contract.
 
 ### 5.2 Runtime / integration
 
@@ -327,17 +318,6 @@ requires a live Minecraft/GameRegistry environment to test properly.
   per-peripheral name.
 * **`AdapterPeripheral.detach` does not unmount** the `openp`/help mounts. CC usually cleans up when the
   peripheral detaches, but explicit unmounting would be safer.
-* **`CommandDump` writes a user-supplied filename** relative to the Minecraft directory. A server operator
-  can accidentally write outside the intended folder (`../`). Recommendation: reject path separators or
-  normalize/resolve against the MC directory.
-* **`mcmod.info` still has `useDependencyInformation: false`** and an empty `requiredMods` list. FML uses
-  the `@Mod(dependencies = ...)` string, so this is cosmetic, but setting `true` and listing OpenModsLib/CC
-  would help third-party launchers.
-* **`ItemStackMetadataBuilder.NULL`** only contains `id=invalid`; the non-null shape has `name`, `qty`,
-  `dmg`, etc. Recommendation: return the same keys with neutral values, or document the reduced shape.
-* **`EntityMetadataBuilder`** assumes `Entity#getUniqueID()` is non-null in the basic map. It currently
-  survives because the outbound converter turns null into nil, but a defensive `if (id != null)` would be
-  clearer.
 * **`AdapterRegistryWrapper`** is now only a thin registration facade; the `registerInline` method is a
   deprecated no-op. It is fine to keep for binary compatibility, but a future API bump could remove it.
 * **`LuaReflectionHelper`** exposes raw reflection metadata and is only enabled by `dev.enableDevMethods`.

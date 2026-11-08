@@ -20,9 +20,9 @@
     "logoFile": "",
     "screenshots": [],
     "parent": "",
-    "requiredMods": [],
+    "requiredMods": ["OpenMods"],
     "dependencies": [],
     "dependants": [],
-    "useDependencyInformation": false
+    "useDependencyInformation": true
   }]
 }

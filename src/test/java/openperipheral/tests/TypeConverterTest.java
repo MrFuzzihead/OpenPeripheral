@@ -70,6 +70,21 @@ public class TypeConverterTest {
         private static final long serialVersionUID = 1L;
     }.getType();
 
+    private static final Type STRING_LINKED_LIST = new TypeToken<java.util.LinkedList<String>>() {
+
+        private static final long serialVersionUID = 1L;
+    }.getType();
+
+    private static final Type STRING_LINKED_MAP = new TypeToken<java.util.LinkedHashMap<String, Integer>>() {
+
+        private static final long serialVersionUID = 1L;
+    }.getType();
+
+    private static final Type STRING_TREE_SET = new TypeToken<java.util.TreeSet<String>>() {
+
+        private static final long serialVersionUID = 1L;
+    }.getType();
+
     public static enum TestEnum {
         ALPHA,
         BETA
@@ -273,6 +288,83 @@ public class TypeConverterTest {
         final java.util.HashSet<String> set = (java.util.HashSet<String>) converter()
             .toJava(table("a", Boolean.TRUE), STRING_HASH_SET);
         Assert.assertTrue(set.contains("a"));
+    }
+
+    @Test
+    public void concreteListFromTable() {
+        @SuppressWarnings("unchecked")
+        final java.util.LinkedList<String> result = (java.util.LinkedList<String>) converter()
+            .toJava(table(1.0, "a", 2.0, "b"), STRING_LINKED_LIST);
+        Assert.assertEquals(java.util.Arrays.asList("a", "b"), result);
+    }
+
+    @Test
+    public void concreteMapFromTable() {
+        @SuppressWarnings("unchecked")
+        final java.util.LinkedHashMap<String, Integer> result = (java.util.LinkedHashMap<String, Integer>) converter()
+            .toJava(table("a", 1.0), STRING_LINKED_MAP);
+        Assert.assertEquals(Integer.valueOf(1), result.get("a"));
+    }
+
+    @Test
+    public void concreteSetFromTable() {
+        @SuppressWarnings("unchecked")
+        final java.util.TreeSet<String> result = (java.util.TreeSet<String>) converter()
+            .toJava(table("b", Boolean.TRUE, "a", Boolean.TRUE), STRING_TREE_SET);
+        Assert.assertEquals(java.util.Arrays.asList("a", "b"), new java.util.ArrayList<String>(result));
+    }
+
+    @Test
+    public void stringConverterAcceptsScalars() {
+        Assert.assertEquals("3", converter().toJava(3, String.class));
+        Assert.assertEquals("true", converter().toJava(Boolean.TRUE, String.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void stringConverterRejectsTables() {
+        converter().toJava(table(1.0, "a"), String.class);
+    }
+
+    @Test
+    public void inboundRecursionIsStopped() {
+        final TypeConverter converter = converter();
+        converter.register(new IGenericInboundTypeConverter() {
+
+            @Override
+            public Object toJava(IConverter registry, Object obj, Type expected) {
+                return registry.toJava(obj, expected);
+            }
+        });
+
+        try {
+            converter.toJava("x", String.class);
+            Assert.fail("Expected recursion guard");
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(
+                expected.getMessage()
+                    .contains("recursion"));
+        }
+    }
+
+    @Test
+    public void outboundRecursionIsStopped() {
+        final TypeConverter converter = converter();
+        converter.register(new IOutboundTypeConverter() {
+
+            @Override
+            public Object fromJava(IConverter registry, Object obj) {
+                return registry.fromJava(obj);
+            }
+        });
+
+        try {
+            converter.fromJava("x");
+            Assert.fail("Expected recursion guard");
+        } catch (IllegalArgumentException expected) {
+            Assert.assertTrue(
+                expected.getMessage()
+                    .contains("recursion"));
+        }
     }
 
     @Test

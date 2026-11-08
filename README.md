@@ -46,7 +46,7 @@ The unit test suite runs on a Java 8 toolchain so production bytecode is exercis
 ```
 
 Coverage is also checked as part of `./gradlew check`. The current floor is 65% line / 50% branch; raise it as
-coverage improves. Unit coverage is currently 74.4% line / 66.2% branch.
+coverage improves. Unit coverage is currently 74.4% line / 66.7% branch.
 
 In-game tests
 -------------

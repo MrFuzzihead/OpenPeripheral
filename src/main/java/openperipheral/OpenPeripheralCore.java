@@ -101,6 +101,10 @@ public class OpenPeripheralCore {
 
         MinecraftForge.EVENT_BUS.register(TileEntityBlacklist.INSTANCE);
 
+        if (Config.devMethods) {
+            Log.warn("OpenPeripheral development reflection methods are enabled (dev.enableDevMethods=true)");
+        }
+
         FMLInterModComms.sendMessage(Mods.OPENCOMPUTERS, "blacklistPeripheral", IOpenPeripheral.class.getName());
 
         TypeClassifier.INSTANCE.registerClassifier(new MinecraftTypeClassifier());

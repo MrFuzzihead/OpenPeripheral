@@ -74,6 +74,17 @@ public class MetadataTest {
     }
 
     @Test
+    public void entityBasicMetadataOmitsNullUuid() {
+        final Entity entity = mock(Entity.class);
+        when(entity.getCommandSenderName()).thenReturn("TestEntity");
+        when(entity.getEntityId()).thenReturn(42);
+        when(entity.getUniqueID()).thenReturn(null);
+
+        final Map<String, Object> basic = new EntityMetadataBuilder().getBasicEntityMetadata(entity, null);
+        Assert.assertFalse(basic.containsKey("uuid"));
+    }
+
+    @Test
     public void entityBasicMetadata() {
         final EntityMetadataBuilder builder = new EntityMetadataBuilder();
         final Entity entity = mockEntity();

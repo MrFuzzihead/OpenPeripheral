@@ -45,6 +45,8 @@ import openperipheral.converter.outbound.ConverterStructOutbound;
 
 public abstract class TypeConverter implements IConverter {
 
+    private static final int MAX_CONVERSION_DEPTH = 64;
+
     protected final Deque<IGenericInboundTypeConverter> inbound = Lists.newLinkedList();
 
     protected final Deque<IOutboundTypeConverter> outbound = Lists.newLinkedList();
@@ -52,6 +54,22 @@ public abstract class TypeConverter implements IConverter {
     private final Set<Class<?>> directlyIgnored = Sets.newHashSet();
 
     private final List<Class<?>> subclassIngored = Lists.newArrayList();
+
+    private final ThreadLocal<Integer> conversionDepth = new ThreadLocal<Integer>();
+
+    private int enterConversion() {
+        final Integer previous = conversionDepth.get();
+        final int depth = previous != null ? previous : 0;
+        if (depth >= MAX_CONVERSION_DEPTH)
+            throw new IllegalArgumentException("Type conversion recursion limit exceeded (possible converter loop)");
+        conversionDepth.set(depth + 1);
+        return depth;
+    }
+
+    private void exitConversion(int previous) {
+        if (previous == 0) conversionDepth.remove();
+        else conversionDepth.set(previous);
+    }
 
     @Override
     public void registerIgnored(Class<?> ignored, boolean includeSubclasses) {
@@ -134,25 +152,30 @@ public abstract class TypeConverter implements IConverter {
 
     @Override
     public Object toJava(Object obj, Type expected) {
-        if (obj == null) {
+        final int previousDepth = enterConversion();
+        try {
+            if (obj == null) {
+                final TypeToken<?> type = TypeToken.of(expected);
+                // Lua nil is a valid value for any reference type, but it cannot be stored in a primitive.
+                Preconditions.checkArgument(!type.isPrimitive(), "Type %s cannot be nil", type);
+                return null;
+            }
+
+            for (IGenericInboundTypeConverter converter : inbound) {
+                Object response = converter.toJava(this, obj, expected);
+                if (response != null) return response;
+            }
+
             final TypeToken<?> type = TypeToken.of(expected);
-            // Lua nil is a valid value for any reference type, but it cannot be stored in a primitive.
-            Preconditions.checkArgument(!type.isPrimitive(), "Type %s cannot be nil", type);
-            return null;
+            throw new IllegalArgumentException(
+                String.format(
+                    "No known conversion of value %s to %s",
+                    obj,
+                    type.getRawType()
+                        .getSimpleName()));
+        } finally {
+            exitConversion(previousDepth);
         }
-
-        for (IGenericInboundTypeConverter converter : inbound) {
-            Object response = converter.toJava(this, obj, expected);
-            if (response != null) return response;
-        }
-
-        final TypeToken<?> type = TypeToken.of(expected);
-        throw new IllegalArgumentException(
-            String.format(
-                "No known conversion of value %s to %s",
-                obj,
-                type.getRawType()
-                    .getSimpleName()));
     }
 
     @Override
@@ -171,15 +194,20 @@ public abstract class TypeConverter implements IConverter {
 
     @Override
     public Object fromJava(Object obj) {
-        if (obj == null || isIgnored(obj.getClass())) return obj;
+        final int previousDepth = enterConversion();
+        try {
+            if (obj == null || isIgnored(obj.getClass())) return obj;
 
-        for (IOutboundTypeConverter converter : outbound) {
-            Object response = converter.fromJava(this, obj);
-            if (response != null) return response;
+            for (IOutboundTypeConverter converter : outbound) {
+                Object response = converter.fromJava(this, obj);
+                if (response != null) return response;
+            }
+
+            // should never get here, since ConverterString is catch-all
+            throw new IllegalArgumentException("Conversion failed on value " + obj);
+        } finally {
+            exitConversion(previousDepth);
         }
-
-        // should never get here, since ConverterString is catch-all
-        throw new IllegalArgumentException("Conversion failed on value " + obj);
     }
 
     public static Object nullableToJava(IConverter converter, Object value, Type expectedType) {

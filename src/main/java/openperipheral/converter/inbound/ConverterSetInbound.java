@@ -1,10 +1,13 @@
 package openperipheral.converter.inbound;
 
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
@@ -34,11 +37,24 @@ public class ConverterSetInbound implements IGenericInboundTypeConverter {
         if (obj instanceof Map) {
             final TypeToken<?> type = TypeToken.of(expected);
             final Class<?> rawType = type.getRawType();
-            if (rawType.isAssignableFrom(java.util.HashSet.class)) {
+            if (rawType.isAssignableFrom(HashSet.class) || rawType.isAssignableFrom(TreeSet.class)
+                || (!rawType.isInterface() && !Modifier.isAbstract(rawType.getModifiers())
+                    && Set.class.isAssignableFrom(rawType))) {
                 final Type valueType = type.resolveType(TYPE_PARAM)
                     .getType();
 
-                Set<Object> result = Sets.newHashSet();
+                final Set<Object> result;
+                if (rawType.isAssignableFrom(HashSet.class)) result = Sets.newHashSet();
+                else if (rawType.isAssignableFrom(TreeSet.class)) result = new TreeSet<Object>();
+                else {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        final Set<Object> instance = (Set<Object>) rawType.newInstance();
+                        result = instance;
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("Failed to create set implementation " + rawType, e);
+                    }
+                }
 
                 for (Map.Entry<?, ?> e : ((Map<?, ?>) obj).entrySet()) {
                     final Object value = e.getKey();

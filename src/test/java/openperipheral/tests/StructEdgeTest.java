@@ -46,6 +46,16 @@ public class StructEdgeTest {
     }
 
     @ScriptStruct
+    public static class PrivateStruct {
+
+        @StructField
+        private String secret;
+
+        @StructField
+        public int visible;
+    }
+
+    @ScriptStruct
     public class InnerStruct {
 
         @StructField
@@ -77,6 +87,19 @@ public class StructEdgeTest {
         final Named result = (Named) handler.toJava(new TypeConversionRegistryCC(), ImmutableMap.of("name", "x"), 0);
         Assert.assertEquals("x", result.name);
         Assert.assertNull(result.count);
+    }
+
+    @Test
+    public void privateFieldsAreAccessible() {
+        final IStructHandler handler = StructHandlerProvider.instance.getHandler(PrivateStruct.class);
+        final PrivateStruct result = (PrivateStruct) handler
+            .toJava(new TypeConversionRegistryCC(), ImmutableMap.of("secret", "hidden", "visible", 2), 0);
+        Assert.assertEquals("hidden", result.secret);
+        Assert.assertEquals(2, result.visible);
+
+        final Map<?, ?> output = handler.fromJava(new TypeConversionRegistryCC(), result, 0);
+        Assert.assertEquals("hidden", output.get("secret"));
+        Assert.assertEquals(2.0, output.get("visible"));
     }
 
     @Test
