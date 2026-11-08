@@ -1,6 +1,15 @@
 #OpenPeripheral default user-friendly names
+#
+# DEPRECATED / SUPERSEDED note: on ComputerCraft 3.3.1+, CC ships generic
+# peripherals natively ("inventory" for any IInventory, "fluid_storage" for any
+# IFluidHandler, "energy_storage") and its DefaultPeripheralProvider is
+# registered before OpenPeripheral's, so the inventory/fluid names below
+# never attach on CC - CC's names and methods attach instead.
+# The OP names are kept unchanged for the OpenComputers path (where CC's
+# generics do not exist) and for backward compatibility. OP cannot override
+# CC's native peripherals.
 
-# vanilla
+# vanilla (inventory entries below are the deprecated/superseded ones)
 net.minecraft.block.BlockJukebox$TileEntityJukebox	record_player
 net.minecraft.tileentity.TileEntityBeacon	beacon
 net.minecraft.tileentity.TileEntityBrewingStand	brewing_stand

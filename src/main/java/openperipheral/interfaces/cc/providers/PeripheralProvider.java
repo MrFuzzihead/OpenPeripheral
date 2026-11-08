@@ -28,6 +28,15 @@ import openperipheral.interfaces.cc.ModuleComputerCraft;
 import openperipheral.interfaces.cc.wrappers.AdapterPeripheral;
 import openperipheral.interfaces.cc.wrappers.ProxyAdapterPeripheral;
 
+/**
+ * Peripherals are resolved by {@code ComputerCraft.getPeripheralAt} in registration order (first
+ * non-null wins). CC's own provider (including {@code DefaultPeripheralProvider} with its native
+ * {@code inventory}/{@code fluid_storage}/{@code energy_storage} generics) registers before this
+ * one (preInit, after:ComputerCraft), so OP's vanilla inventory/fluid adapters are shadowed on
+ * CC 3.3.1+ and only attach on OpenComputers. OP therefore cannot override CC's native peripherals.
+ * The shadowed OP names/adapters are kept for the OC path and backward compatibility.
+ * No race condition exists: lookup is sequential and single-threaded.
+ */
 public class PeripheralProvider implements IPeripheralProvider {
 
     private static final IPeripheralFactory<TileEntity> NULL_FACTORY = new IPeripheralFactory<TileEntity>() {

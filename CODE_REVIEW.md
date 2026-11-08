@@ -326,6 +326,22 @@ requires a live Minecraft/GameRegistry environment to test properly.
 
 ### 5.2 Runtime / integration
 
+* **Vanilla inventory/fluid adapters are deprecated / superseded on CC, kept for OC.**
+  CC 3.3.1 ships native generics - `InventoryPeripheral` (`inventory`: `size`, `list`,
+  `getItemDetail`, `getItemLimit`, `pushItems`, `pullItems`) for any `IInventory`,
+  `GenericFluidPeripheral`/`GenericCombinedPeripheral` (`fluid_storage`) for any `IFluidHandler`,
+  and `EnergyStoragePeripheral` (`energy_storage`) - all via `DefaultPeripheralProvider`.
+  Providers are resolved in registration order (first non-null wins; exceptions swallowed), and CC
+  registers before OP (`after:ComputerCraft` + preInit ordering), so CC's generics always win and
+  OP's vanilla `IInventory`/`IFluidHandler` adapters (chest, furnace, hopper, dispenser, dropper,
+  brewing_stand, and fluid handling) never attach on CC. OP **cannot override** CC's native
+  peripherals, so there is no race condition either - lookup is sequential, single-threaded.
+  The duplicated OP names/adapters are kept unchanged for the OpenComputers path (where CC's
+  generics do not exist) and for backward compatibility. Documentation (`default_names.txt`,
+  `PeripheralProvider`/`PeripheralTypeId` Javadoc, `op_dump.xsl`, README) marks them deprecated/
+  superseded instead of user-visible. Removing them wholesale would drop inventory/fluid access
+  for OC computers, so that trade-off was deliberately not taken.
+
 * **`AdapterRegistryWrapper`** is now only a thin registration facade; the `registerInline` method is a
   deprecated no-op. It is fine to keep for binary compatibility, but a future API bump could remove it.
 * **`LuaReflectionHelper`** exposes raw reflection metadata and is only enabled by `dev.enableDevMethods`.

@@ -31,6 +31,12 @@ test-coverage notes. The original project page, forums thread, and website are a
 - **Automatic peripheral adapters** — inventories, chests, tanks, hoppers, and many other vanilla and modded
   blocks become computer peripherals without per-block code. Adapters can be added by other mods via the
   `OpenPeripheralApi` jar.
+  > **Note (deprecated / superseded):** on ComputerCraft 3.3.1+, CC ships its own generic peripherals
+  > (`inventory` for any `IInventory`, `fluid_storage` for any `IFluidHandler`, `energy_storage`), and CC's
+  > `DefaultPeripheralProvider` registers first, so OP's vanilla `IInventory`/`IFluidHandler` adapters
+  > (`chest`, `furnace`, `hopper`, `dispenser`, `dropper`, `brewing_stand`, fluid handling) are **shadowed
+  > on CC** and never attach. OP's names and adapters are kept unchanged for the OpenComputers path
+  > (where CC's generics do not exist) and for backward compatibility; OP cannot override CC's natives.
 - **ComputerCraft and OpenComputers interfaces** — native CC peripherals today; OpenComputers support is
   compile-time and adapter-tested but is not part of the in-game test suite yet.
 - **Lua type conversion** — a registry of inbound/outbound converters (primitives, strings, UUIDs, enums,
