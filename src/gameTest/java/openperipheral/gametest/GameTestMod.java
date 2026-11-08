@@ -20,6 +20,9 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraft.world.World;
+import net.minecraftforge.fluids.FluidRegistry;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidTankInfo;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
@@ -51,6 +54,7 @@ import openperipheral.api.adapter.method.ReturnType;
 import openperipheral.api.adapter.method.ScriptCallable;
 import openperipheral.api.architecture.IArchitectureChecker;
 import openperipheral.api.architecture.IFeatureGroupManager;
+import openperipheral.api.converter.IConverter;
 import openperipheral.api.converter.IConverterManager;
 import openperipheral.api.meta.IEntityMetaBuilder;
 import openperipheral.api.meta.IEntityMetaProvider;
@@ -60,6 +64,7 @@ import openperipheral.api.meta.IItemStackMetaProvider;
 import openperipheral.api.meta.IItemStackPartialMetaBuilder;
 import openperipheral.api.meta.IMetaProviderProxy;
 import openperipheral.api.peripheral.IPeripheralBlacklist;
+import openperipheral.converter.TypeConvertersProvider;
 import openperipheral.interfaces.cc.providers.PeripheralProvider;
 
 @Mod(
@@ -299,6 +304,7 @@ public class GameTestMod {
         testInlinePropertyObject();
         testRealItemAndEntityMetadata(world, itemMeta);
         testMetadataProxies(world, itemMeta, ApiAccess.getApi(IEntityMetaBuilder.class));
+        testFluidConverters();
         testBlacklist(world);
         testCommandDump(server);
         return world;
@@ -521,6 +527,23 @@ public class GameTestMod {
                     .get("gametest_entity_meta")),
             "Registered entity provider was not used");
         Log.info("GAMETEST_METADATA_PROXY_OK");
+    }
+
+    private static void testFluidConverters() {
+        final IConverter converter = TypeConvertersProvider.INSTANCE.getConverter(Constants.ARCH_COMPUTER_CRAFT);
+        final FluidStack fluid = new FluidStack(FluidRegistry.WATER, 1000);
+
+        final Map<?, ?> fluidMap = (Map<?, ?>) converter.fromJava(fluid);
+        check(fluidMap != null, "FluidStack conversion returned null");
+        check(((Number) fluidMap.get("amount")).intValue() == 1000, "Unexpected fluid amount");
+        check("water".equals(fluidMap.get("name")), "Unexpected fluid name: " + fluidMap.get("name"));
+
+        final FluidTankInfo tank = new FluidTankInfo(fluid, 4000);
+        final Map<?, ?> tankMap = (Map<?, ?>) converter.fromJava(tank);
+        check(tankMap != null, "FluidTankInfo conversion returned null");
+        check(((Number) tankMap.get("capacity")).intValue() == 4000, "Unexpected tank capacity");
+        check(tankMap.get("contents") instanceof Map, "Tank contents were not converted to a table");
+        Log.info("GAMETEST_FLUID_OK");
     }
 
     private static void testBlacklist(World world) {

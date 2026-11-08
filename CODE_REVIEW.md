@@ -185,6 +185,7 @@ asserts:
 * Inline `@Property` get/set and `@ScriptCallable` methods on a plain object.
 * Live `IItemStackMetaBuilder`/`IEntityMetaBuilder` output and their partial builders/proxies, including
   registered custom providers.
+* `FluidStack`/`FluidTankInfo` outbound conversion against Forge's fluid registry.
 * `IPeripheralBlacklist`/`TileEntityBlacklist`, `/op_dump`, and the `ApiAccess` interfaces.
 * The test mod runs assertions on a worker thread after `FMLServerStartedEvent`, so `SynchronousExecutor`'s
   main-thread tasks can execute while the server tick loop continues.
