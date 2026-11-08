@@ -56,7 +56,7 @@ val isGameTestRun = project.hasProperty("gameTest") ||
     gradle.startParameter.taskNames.any { it.contains("gameTestServer") }
 if (isGameTestRun) {
     tasks.withType<JavaExec>().configureEach {
-        if (name.startsWith("runServer")) {
+        if (name.startsWith("runServer") || name.startsWith("runClient")) {
             classpath += gameTestSourceSet.output
             systemProperty("openperipheral.gameTest", "true")
         }

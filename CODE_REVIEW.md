@@ -22,7 +22,8 @@ The companion changes are in the working tree; run `git diff` for the exact patc
 * **In-game game tests now exist.** `./gradlew gameTestServer` boots a dedicated server with a test-only mod
   that exercises the real ComputerCraft provider, peripheral attach/detach, a real CC computer running Lua
   against the peripheral, inline properties, live `ItemStack`/entity metadata, IMC blacklisting, and
-  `/op_dump`. The test mod lives in `src/gameTest/java` and is never shipped in the mod jar.
+  `/op_dump`; the client half opens the real config GUI under Xvfb. The test mod lives in
+  `src/gameTest/java` and is never shipped in the mod jar.
 * **40+ defects were fixed**, including several that were user-visible:
   * Lua `nil` could not be passed to nullable reference arguments, and `nil` was accepted for primitives.
   * `@IndexedProperty(valueType = ...)` documentation was ignored.
@@ -108,13 +109,16 @@ Both were run locally and reached `OPENPERIPHERAL_SMOKE_TEST_OK`.
   `Setting user:` and the marker. Both jobs upload their logs.
 * `game-test` (required): runs `./gradlew gameTestServer`, greps for `GAMETEST_ASSERTIONS_OK` and
   `OPENPERIPHERAL_GAMETEST_OK`, and uploads `game-test.log`.
+* `client-game-test` (non-blocking): runs `./gradlew runClient25 -PgameTest` under Xvfb, opens the real config
+  screen, greps for `OPENPERIPHERAL_CLIENT_GAMETEST_OK`, and uploads the log.
 
 ### 3.2b In-game game tests
 
 `src/gameTest/java/openperipheral/gametest/GameTestMod.java` is a separate, non-shipped `@Mod`. It is placed on
-the run classpath only for `./gradlew gameTestServer` (or `runServer25 -PgameTest`). The assertions run on a
-worker thread after `FMLServerStartedEvent` so the server tick loop can execute the `SynchronousExecutor`
-main-thread tasks that the real ComputerCraft computer is waiting for.
+the run classpath only for `./gradlew gameTestServer` / `./gradlew runClient25 -PgameTest` (or
+`runServer25 -PgameTest`). The server assertions run on a worker thread after `FMLServerStartedEvent` so the
+server tick loop can execute the `SynchronousExecutor` main-thread tasks that the real ComputerCraft computer
+is waiting for. The client half opens `ConfigGuiFactory.ConfigScreen` after `FMLLoadCompleteEvent` and exits.
 
 ### 3.3 Mockito migration
 
@@ -337,8 +341,6 @@ requires a live Minecraft/GameRegistry environment to test properly.
 
 * **Client smoke test is non-blocking** because software OpenGL under Xvfb is environment-dependent. It
   still uploads logs and greps for markers; promote it to required once the runner image is known-good.
-* **The client GUI screen factory** (`ConfigScreen.createConfigElements`) is still only partly covered;
-  `FeatureConfigElement` now has a unit test, and `/op_dump` is covered by the game test.
 * **`ItemStackMetadataBuilder$Proxy`/partial-builder methods** are not all exercised; the game test covers
   the non-null `getItemStackMetadata` path and the unit tests cover the null/empty paths.
 * **Mockito 4 is the Java 8 ceiling.** If the test runtime is moved to Java 17 (the production class files
@@ -371,6 +373,7 @@ test launcher.
 ./gradlew runServer25 -PsmokeTest                    PASS (Done + OPENPERIPHERAL_SMOKE_TEST_OK)
 ./gradlew runClient25 -PsmokeTest                    PASS (Setting user + OPENPERIPHERAL_SMOKE_TEST_OK)
 ./gradlew gameTestServer                             PASS (GAMETEST_ASSERTIONS_OK + OPENPERIPHERAL_GAMETEST_OK)
+./gradlew runClient25 -PgameTest                     PASS (OPENPERIPHERAL_CLIENT_GAMETEST_OK)
 ```
 
 Generated reports:
@@ -393,4 +396,5 @@ mkdir -p run/server && echo "eula=true" > run/server/eula.txt
 ./gradlew runServer25 -PsmokeTest --console=plain --no-configuration-cache
 ./gradlew runClient25 -PsmokeTest --console=plain --no-configuration-cache   # needs a display/Xvfb
 ./gradlew gameTestServer --console=plain --no-configuration-cache            # in-game assertions
+./gradlew runClient25 -PgameTest --console=plain --no-configuration-cache    # config GUI, needs Xvfb/display
 ```

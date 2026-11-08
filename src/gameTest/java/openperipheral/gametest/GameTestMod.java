@@ -22,6 +22,7 @@ import net.minecraft.world.World;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLLoadCompleteEvent;
 import cpw.mods.fml.common.event.FMLServerStartedEvent;
 import dan200.computercraft.api.filesystem.IMount;
 import dan200.computercraft.api.filesystem.IWritableMount;
@@ -212,6 +213,16 @@ public class GameTestMod {
         final IPeripheralAdapterRegistry registry = ApiAccess.getApi(IPeripheralAdapterRegistry.class);
         check(registry != null, "IPeripheralAdapterRegistry API is missing");
         check(registry.register(new ChestTestAdapter()), "Failed to register test adapter");
+    }
+
+    @Mod.EventHandler
+    public void clientLoad(FMLLoadCompleteEvent evt) {
+        if (!ENABLED) return;
+        if (!FMLCommonHandler.instance()
+            .getSide()
+            .isClient()) return;
+
+        ClientGameTests.run();
     }
 
     @Mod.EventHandler

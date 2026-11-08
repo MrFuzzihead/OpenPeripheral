@@ -60,7 +60,13 @@ mkdir -p run/server && echo "eula=true" > run/server/eula.txt
 ./gradlew gameTestServer
 ```
 
-The test mod is compiled in its own source set and is only placed on the run classpath for this task, so it is
+The same test mod also has a client half that opens the real config screen and exits:
+
+```sh
+./gradlew runClient25 -PgameTest          # needs a display; use xvfb-run in CI
+```
+
+The test mod is compiled in its own source set and is only placed on the run classpath for these tasks, so it is
 never shipped in `build/libs`. OpenComputers is intentionally not part of the in-game test suite yet.
 
 Headless smoke tests
