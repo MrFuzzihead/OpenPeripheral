@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.List;
 import java.util.Locale;
@@ -20,6 +21,7 @@ import net.minecraft.tileentity.TileEntity;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -78,7 +80,7 @@ public class PeripheralTypeProvider implements IPeripheralTypeProvider {
     }
 
     private void parseNames(String fileName, InputStream stream) throws IOException {
-        LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream));
+        LineNumberReader reader = new LineNumberReader(new InputStreamReader(stream, Charsets.UTF_8));
 
         String line;
         while ((line = reader.readLine()) != null) {
@@ -101,7 +103,8 @@ public class PeripheralTypeProvider implements IPeripheralTypeProvider {
             Closer closer = Closer.create();
             try {
                 final OutputStream stream = closer.register(new FileOutputStream(file));
-                final PrintWriter writer = closer.register(new PrintWriter(stream));
+                final PrintWriter writer = closer
+                    .register(new PrintWriter(new OutputStreamWriter(stream, Charsets.UTF_8)));
                 writeNames(writer);
             } finally {
                 closer.close();

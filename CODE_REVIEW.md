@@ -13,8 +13,8 @@ The companion changes are in the working tree; run `git diff` for the exact patc
 * **Dependencies were brought up to the newest versions that are compatible with a 1.7.10 / Java 8 mod.**
   ComputerCraft-Legacy 3.3.1, NotEnoughItems 2.9.2-GTNH, GTNH settings convention 2.0.34, Mockito 4.11.0,
   JaCoCo 0.8.16. OpenModsLib stays at 0.10.15 on purpose (see §2).
-* **The unit-test suite grew from 109 tests in 11 classes to 320 tests in 34 classes.**
-  Line coverage is **74.4 %**, branch coverage **66.7 %** (JaCoCo 0.8.16). The build now enforces a
+* **The unit-test suite grew from 109 tests in 11 classes to 323 tests in 37 classes.**
+  Line coverage is **75.3 %**, branch coverage **67.2 %** (JaCoCo 0.8.16). The build now enforces a
   65 % line / 50 % branch floor via `jacocoTestCoverageVerification`, wired into `check`.
 * **Headless boot tests now exist.** `runServer25 -PsmokeTest` and `runClient25 -PsmokeTest` boot the real
   game, wait for FML load-complete, then exit themselves. Both were run locally (server: pass, client: pass)
@@ -81,6 +81,15 @@ The Gradle alias logic in `addon.gradle.kts` was updated to say “ComputerCraft
 
 Reports land in `build/reports/jacoco/test/html/index.html` and
 `build/reports/jacoco/test/jacocoTestReport.xml`.
+
+### 3.1b SpotBugs
+
+`build.gradle.kts` applies SpotBugs 6.5.13. It runs at `MAX` effort / `HIGH` confidence against the main mod
+only (the GTNH convention also creates SpotBugs tasks for the patched-MC/api source sets, which are not our
+code). `check` depends on `spotbugsMain`; `gradle/spotbugs-exclude.xml` suppresses the one FML `@Instance`
+false positive (`OpenPeripheralCore.instance` cannot be final). The current report is clean.
+
+Reports: `build/reports/spotbugs/main.html` and `main.xml`.
 
 ### 3.2 Headless smoke tests
 
@@ -160,6 +169,9 @@ New test classes (in `src/test/java/openperipheral/tests`):
 | `LuaReflectionHelperTest` | dev-only reflection methods and argument/env plumbing. |
 | `ConfigChangeListenerTest` | feature-group config changes are persisted to the config file. |
 | `CommandDumpPathTest` | dump output paths are confined to the Minecraft directory. |
+| `AdapterPeripheralMountTest` | shared docs mounts are reference-counted and unmounted on the last detach. |
+| `ApiSetupTest` | default API provider registration. |
+| `SmokeTestHookTest` | the smoke-test hook is inert unless explicitly enabled. |
 
 The in-game suite (`src/gameTest/java/openperipheral/gametest/GameTestMod.java`) is separate from JaCoCo. It
 asserts:
@@ -181,13 +193,13 @@ Coverage movement:
 
 | Counter | Before | After |
 |---|---:|---:|
-| Tests | 109 | **320** |
-| Test classes | 11 | **34** |
-| Instruction | 39.5 % | **73.5 %** |
-| Branch | 34.3 % | **66.7 %** |
-| Line | 40.9 % | **74.4 %** |
-| Method | 37.0 % | **73.9 %** |
-| Class | 51.3 % | **84.9 %** |
+| Tests | 109 | **323** |
+| Test classes | 11 | **37** |
+| Instruction | 39.5 % | **74.1 %** |
+| Branch | 34.3 % | **67.2 %** |
+| Line | 40.9 % | **75.3 %** |
+| Method | 37.0 % | **74.6 %** |
+| Class | 51.3 % | **86.3 %** |
 
 Coverage numbers refer to the JUnit suite. The in-game suite is pass/fail and intentionally not part of the
 JaCoCo counters; its assertions are listed above.
@@ -312,16 +324,10 @@ requires a live Minecraft/GameRegistry environment to test properly.
 
 ### 5.2 Runtime / integration
 
-* **Peripheral mount name collision.** `AdapterPeripheral.attach` mounts the docs at the constant name
-  `openp` for every generated peripheral on a computer. Whether CC tolerates the same mount name twice
-  depends on the CC version. Recommendation: mount once per computer (track in the access cache) or use a
-  per-peripheral name.
-* **`AdapterPeripheral.detach` does not unmount** the `openp`/help mounts. CC usually cleans up when the
-  peripheral detaches, but explicit unmounting would be safer.
 * **`AdapterRegistryWrapper`** is now only a thin registration facade; the `registerInline` method is a
   deprecated no-op. It is fine to keep for binary compatibility, but a future API bump could remove it.
 * **`LuaReflectionHelper`** exposes raw reflection metadata and is only enabled by `dev.enableDevMethods`.
-  Keep it off in production packs; consider adding a warning when it is enabled.
+  A warning is now logged when enabled; keep it off in production packs.
 
 ### 5.3 Tests / tooling
 
@@ -332,9 +338,8 @@ requires a live Minecraft/GameRegistry environment to test properly.
 * **Mockito 4 is the Java 8 ceiling.** If the test runtime is moved to Java 17 (the production class files
   still target Java 8), Mockito 5.24 and JUnit 5 can be adopted. That is a separate migration; the current
   setup deliberately exercises the Java 8 runtime.
-* **Add static analysis.** The project currently relies on Spotless + Checkstyle (wildcard imports only).
-  `spotbugs` or Error Prone would catch several of the patterns fixed here automatically. A
-  `dependencyUpdates`/Renovate check would keep the version pins current.
+* **Dependency-update automation** (Renovate/Dependabot) is not configured; GTNH's `updateDependencies`
+  task remains the manual path.
 * **OpenComputers is intentionally excluded from the in-game suite.** Its unit/ASM coverage remains, but
   its runtime driver/injector path is not booted. Add OC to a future game-test runtime configuration when it
   becomes a priority.
@@ -355,6 +360,7 @@ test launcher.
 ./gradlew jacocoTestReport                           PASS
 ./gradlew jacocoTestCoverageVerification             PASS (65 % line / 50 % branch floor)
 ./gradlew build                                      PASS
+./gradlew spotbugsMain                               PASS (0 findings)
 ./gradlew runServer25 -PsmokeTest                    PASS (Done + OPENPERIPHERAL_SMOKE_TEST_OK)
 ./gradlew runClient25 -PsmokeTest                    PASS (Setting user + OPENPERIPHERAL_SMOKE_TEST_OK)
 ./gradlew gameTestServer                             PASS (GAMETEST_ASSERTIONS_OK + OPENPERIPHERAL_GAMETEST_OK)

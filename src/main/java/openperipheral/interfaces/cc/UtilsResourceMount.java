@@ -8,6 +8,7 @@ import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.io.ByteStreams;
 
@@ -23,7 +24,7 @@ public class UtilsResourceMount implements IMount {
         ImmutableSortedSet.Builder<String> files = ImmutableSortedSet.naturalOrder();
         InputStream fileList = getClass().getResourceAsStream(RESOURCE_PATH + "files.lst");
         if (fileList != null) {
-            try (Scanner sc = new Scanner(fileList)) {
+            try (Scanner sc = new Scanner(fileList, Charsets.UTF_8.name())) {
                 while (sc.hasNextLine()) {
                     String fileName = sc.nextLine()
                         .trim();

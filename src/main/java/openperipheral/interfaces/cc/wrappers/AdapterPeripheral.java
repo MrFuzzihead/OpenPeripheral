@@ -1,6 +1,8 @@
 package openperipheral.interfaces.cc.wrappers;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -39,11 +41,14 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral, IPeriphe
     private static final String MOUNT_NAME = "openp";
     private static final IMount MOUNT = new UtilsResourceMount();
     private static final ConcurrentMap<Class<?>, String> DOC_TEXT_CACHE = new ConcurrentHashMap<Class<?>, String>();
+    private static final ConcurrentMap<IComputerAccess, Map<String, Integer>> SHARED_MOUNTS = new ConcurrentHashMap<IComputerAccess, Map<String, Integer>>();
     private final Object[] NULL = new Object[0];
 
     protected final String type;
     protected final Object target;
     private final IMount docMount;
+
+    private final ConcurrentMap<IComputerAccess, Set<String>> ownMounts = new ConcurrentHashMap<IComputerAccess, Set<String>>();
 
     private final IndexedMethodMap methods;
 
@@ -194,10 +199,70 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral, IPeriphe
         }
     }
 
+    private void mountShared(IComputerAccess computer, String name, IMount mount) {
+        synchronized (SHARED_MOUNTS) {
+            Set<String> own = ownMounts.get(computer);
+            if (own == null) {
+                own = com.google.common.collect.Sets.newHashSet();
+                ownMounts.put(computer, own);
+            }
+            if (!own.add(name)) return;
+
+            Map<String, Integer> counts = SHARED_MOUNTS.get(computer);
+            if (counts == null) {
+                counts = com.google.common.collect.Maps.newHashMap();
+                SHARED_MOUNTS.put(computer, counts);
+            }
+
+            final Integer count = counts.get(name);
+            if (count != null) {
+                counts.put(name, count + 1);
+                return;
+            }
+
+            try {
+                computer.mount(name, mount);
+                counts.put(name, 1);
+            } catch (Throwable t) {
+                own.remove(name);
+                if (counts.isEmpty()) SHARED_MOUNTS.remove(computer);
+                throw t;
+            }
+        }
+    }
+
+    private void unmountOwned(IComputerAccess computer) {
+        synchronized (SHARED_MOUNTS) {
+            final Set<String> own = ownMounts.remove(computer);
+            if (own == null) return;
+
+            final Map<String, Integer> counts = SHARED_MOUNTS.get(computer);
+            if (counts == null) return;
+
+            for (String name : own) {
+                final Integer count = counts.get(name);
+                if (count == null) continue;
+
+                if (count <= 1) {
+                    counts.remove(name);
+                    try {
+                        computer.unmount(name);
+                    } catch (Throwable t) {
+                        Log.warn(t, "Failed to unmount peripheral docs at %s", name);
+                    }
+                } else {
+                    counts.put(name, count - 1);
+                }
+            }
+
+            if (counts.isEmpty()) SHARED_MOUNTS.remove(computer);
+        }
+    }
+
     @Override
     public void attach(IComputerAccess computer) {
-        computer.mount(MOUNT_NAME, AdapterPeripheral.MOUNT);
-        computer.mount("rom/help/" + computer.getAttachmentName(), docMount);
+        mountShared(computer, MOUNT_NAME, AdapterPeripheral.MOUNT);
+        mountShared(computer, "rom/help/" + computer.getAttachmentName(), docMount);
         if (target instanceof IAttachable) {
             final IArchitectureAccess access;
             synchronized (accessCache) {
@@ -210,6 +275,8 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral, IPeriphe
 
     @Override
     public void detach(IComputerAccess computer) {
+        unmountOwned(computer);
+
         if (target instanceof IAttachable) {
             final IArchitectureAccess access;
             synchronized (accessCache) {

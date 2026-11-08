@@ -13,7 +13,7 @@ public class NamedTupleType implements IScriptType {
     public static class TupleField {
     }
 
-    public static TupleField TAIL = new TupleField() {
+    public static final TupleField TAIL = new TupleField() {
 
         @Override
         public String toString() {

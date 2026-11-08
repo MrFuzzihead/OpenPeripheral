@@ -43,10 +43,11 @@ The unit test suite runs on a Java 8 toolchain so production bytecode is exercis
 ./gradlew test
 ./gradlew jacocoTestReport                  # HTML/XML coverage report in build/reports/jacoco/test/
 ./gradlew jacocoTestCoverageVerification    # enforces the coverage floor
+./gradlew spotbugsMain                     # static analysis (HTML/XML in build/reports/spotbugs/)
 ```
 
 Coverage is also checked as part of `./gradlew check`. The current floor is 65% line / 50% branch; raise it as
-coverage improves. Unit coverage is currently 74.4% line / 66.7% branch.
+coverage improves. Unit coverage is currently 75.3% line / 67.2% branch.
 
 In-game tests
 -------------
