@@ -357,7 +357,7 @@ test launcher.
 ```text
 ./gradlew spotlessCheck                              PASS
 ./gradlew checkstyleMain checkstyleTest              PASS
-./gradlew test                                       PASS (293 tests, 0 failures)
+./gradlew test                                       PASS (323 tests, 0 failures)
 ./gradlew jacocoTestReport                           PASS
 ./gradlew jacocoTestCoverageVerification             PASS (65 % line / 50 % branch floor)
 ./gradlew build                                      PASS
