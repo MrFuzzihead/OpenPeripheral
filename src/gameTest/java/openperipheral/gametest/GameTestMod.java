@@ -586,7 +586,22 @@ public class GameTestMod {
             + "print(\"GAMETEST_QTY=\" .. tostring(s.qty))\n"
             + "p.setStack(2, { id = \"minecraft:diamond\", qty = 7 })\n"
             + "local s2 = p.getStack(2)\n"
-            + "print(\"GAMETEST_SET=\" .. tostring(s2.qty))\n";
+            + "print(\"GAMETEST_SET=\" .. tostring(s2.qty))\n"
+            + "local function checkLua(name)\n"
+            + "  local fn, err = loadfile('/openp/' .. name)\n"
+            + "  print('GAMETEST_LUA_' .. string.upper(name) .. '=' .. (fn and 'OK' or tostring(err)))\n"
+            + "end\n"
+            + "checkLua('docs')\n"
+            + "checkLua('github')\n"
+            + "checkLua('multiperipheral')\n"
+            + "local chunk = loadfile('/openp/multiperipheral')\n"
+            + "if chunk then chunk() end\n"
+            + "local multi = new()\n"
+            + "multi:wrap('back')\n"
+            + "local mr = multi:getSlotCount()\n"
+            + "print('GAMETEST_MULTI=' .. #mr .. ':' .. tostring(mr[1]))\n"
+            + "local ok, err = pcall(function() shell.run('openp/docs', 'back') end)\n"
+            + "print('GAMETEST_DOCS_RUN=' .. tostring(ok) .. ':' .. tostring(err))\n";
         try {
             try (OutputStream out = root.openForWrite("startup")) {
                 out.write(program.getBytes(StandardCharsets.UTF_8));
@@ -607,7 +622,7 @@ public class GameTestMod {
             computer.update();
             Thread.sleep(50);
             terminal = readTerminal(computer);
-            if (terminal.contains("GAMETEST_SET=7")) break;
+            if (terminal.contains("GAMETEST_DOCS_RUN=")) break;
         }
 
         check(terminal != null, "Computer terminal was not readable");
@@ -617,6 +632,14 @@ public class GameTestMod {
             "Lua did not read the item id. Terminal:\n" + terminal);
         check(terminal.contains("GAMETEST_QTY=3"), "Lua did not read the item qty. Terminal:\n" + terminal);
         check(terminal.contains("GAMETEST_SET=7"), "Lua did not write the item back. Terminal:\n" + terminal);
+        check(terminal.contains("GAMETEST_LUA_DOCS=OK"), "docs did not parse. Terminal:\n" + terminal);
+        check(terminal.contains("GAMETEST_LUA_GITHUB=OK"), "github did not parse. Terminal:\n" + terminal);
+        check(
+            terminal.contains("GAMETEST_LUA_MULTIPERIPHERAL=OK"),
+            "multiperipheral did not parse. Terminal:\n" + terminal);
+        check(terminal.contains("GAMETEST_MULTI=1:27"), "multiperipheral dispatch failed. Terminal:\n" + terminal);
+        check(terminal.contains("GAMETEST_DOCS_RUN=true"), "docs failed to run. Terminal:\n" + terminal);
+        check(terminal.contains("getSlotCount("), "docs did not list getSlotCount. Terminal:\n" + terminal);
 
         Log.info("GAMETEST_ASSERTIONS_OK");
         computer.shutdown();

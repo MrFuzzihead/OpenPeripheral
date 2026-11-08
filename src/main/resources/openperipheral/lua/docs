@@ -2,6 +2,34 @@
   Made by SinZ and boq
 --]]
 local args = {...}
+
+local function lower(value)
+  if type(value) == "string" then
+    return value:lower()
+  end
+  return tostring(value or "?")
+end
+
+local function argName(arg)
+  local name = arg.name or "?"
+  if arg.vararg then
+    return name .. "..."
+  elseif arg.optional then
+    return name .. "?"
+  else
+    return name
+  end
+end
+
+local function sortedKeys(values)
+  local keys = {}
+  for key in pairs(values) do
+    table.insert(keys, key)
+  end
+  table.sort(keys)
+  return keys
+end
+
 if #args == 0 then
   print("usage: docs <side> (function)")
   return
@@ -11,47 +39,51 @@ local side = args[1]
 local p = peripheral.wrap(side)
 
 if not p then
-  print("No peripheral on '" .. side .. "'")
+  print("No peripheral on '" .. tostring(side) .. "'")
   return
 end
 
-if not p.getAdvancedMethodsData then
- print("Peripheral '" .. peripheral.getType(side) .. "' is not OpenPeripheral(TM)")
- return
+if type(p.getAdvancedMethodsData) ~= "function" then
+  print("Peripheral '" .. tostring(peripheral.getType(side) or "unknown") .. "' is not OpenPeripheral(TM)")
+  return
 end
 
 local info = p.getAdvancedMethodsData()
-
-function argName(arg)
-  if arg.vararg then
-    return arg.name.."..."
-  elseif arg.optional then
-    return arg.name.."?"
-  else
-    return arg.name
-  end
+if type(info) ~= "table" then
+  print("Peripheral '" .. tostring(peripheral.getType(side) or "unknown") .. "' did not return documentation")
+  return
 end
 
 if #args == 1 then
-  for name,data in pairs(info) do
-    args = {}
-    for _,arg in pairs(data.args) do
-      table.insert(args, argName(arg))
+  for _, name in ipairs(sortedKeys(info)) do
+    local data = info[name] or {}
+    local parts = {}
+    for _, arg in ipairs(data.args or {}) do
+      table.insert(parts, argName(arg))
     end
-    print(name.."("..table.concat(args,",")..")")
+    print(name .. "(" .. table.concat(parts, ",") .. ")")
   end
-else --must be 2 or more
-  for name,data in pairs(info) do
-    if args[2]:lower() == name:lower() then
-      print(name..": "..data.description)
-      print("source: " .. data.source) 
-      print("returns: "..string.lower(data.returnTypes))
-      if #data.args > 0 then
+else
+  local wanted = lower(args[2])
+  local found = false
+
+  for _, name in ipairs(sortedKeys(info)) do
+    if lower(name) == wanted then
+      found = true
+      local data = info[name] or {}
+      print(name .. ": " .. tostring(data.description or ""))
+      print("source: " .. tostring(data.source or "?"))
+      print("returns: " .. lower(data.returnTypes))
+      if #(data.args or {}) > 0 then
         print("args: ")
-        for _,arg in ipairs(data.args) do
-          print(" - ("..arg.type:lower() .. ")"..argName(arg)..": "..arg.description)
+        for _, arg in ipairs(data.args) do
+          print(" - (" .. lower(arg.type) .. ")" .. argName(arg) .. ": " .. tostring(arg.description or ""))
         end
       end
     end
+  end
+
+  if not found then
+    print("No function named '" .. tostring(args[2]) .. "'")
   end
 end

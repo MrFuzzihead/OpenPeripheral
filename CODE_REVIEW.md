@@ -13,8 +13,8 @@ The companion changes are in the working tree; run `git diff` for the exact patc
 * **Dependencies were brought up to the newest versions that are compatible with a 1.7.10 / Java 8 mod.**
   ComputerCraft-Legacy 3.3.1, NotEnoughItems 2.9.2-GTNH, GTNH settings convention 2.0.34, Mockito 4.11.0,
   JaCoCo 0.8.16. OpenModsLib stays at 0.10.15 on purpose (see §2).
-* **The unit-test suite grew from 109 tests in 11 classes to 323 tests in 37 classes.**
-  Line coverage is **75.3 %**, branch coverage **67.2 %** (JaCoCo 0.8.16). The build now enforces a
+* **The unit-test suite grew from 109 tests in 11 classes to 331 tests in 38 classes.**
+  Line coverage is **75.1 %**, branch coverage **67.1 %** (JaCoCo 0.8.16). The build now enforces a
   65 % line / 50 % branch floor via `jacocoTestCoverageVerification`, wired into `check`.
 * **Headless boot tests now exist.** `runServer25 -PsmokeTest` and `runClient25 -PsmokeTest` boot the real
   game, wait for FML load-complete, then exit themselves. Both were run locally (server: pass, client: pass)
@@ -172,6 +172,7 @@ New test classes (in `src/test/java/openperipheral/tests`):
 | `AdapterPeripheralMountTest` | shared docs mounts are reference-counted and unmounted on the last detach. |
 | `ApiSetupTest` | default API provider registration. |
 | `SmokeTestHookTest` | the smoke-test hook is inert unless explicitly enabled. |
+| `LuaScriptsTest` | bundled `docs`/`github`/`multiperipheral` parse with CC's Cobalt compiler; docs rendering, multiperipheral dispatch, and GitHub HTTP/file handling are executed against stubs. |
 
 The in-game suite (`src/gameTest/java/openperipheral/gametest/GameTestMod.java`) is separate from JaCoCo. It
 asserts:
@@ -194,12 +195,12 @@ Coverage movement:
 
 | Counter | Before | After |
 |---|---:|---:|
-| Tests | 109 | **323** |
-| Test classes | 11 | **37** |
-| Instruction | 39.5 % | **74.1 %** |
-| Branch | 34.3 % | **67.2 %** |
-| Line | 40.9 % | **75.3 %** |
-| Method | 37.0 % | **74.6 %** |
+| Tests | 109 | **331** |
+| Test classes | 11 | **38** |
+| Instruction | 39.5 % | **74.0 %** |
+| Branch | 34.3 % | **67.1 %** |
+| Line | 40.9 % | **75.1 %** |
+| Method | 37.0 % | **74.4 %** |
 | Class | 51.3 % | **86.3 %** |
 
 Coverage numbers refer to the JUnit suite. The in-game suite is pass/fail and intentionally not part of the
@@ -325,6 +326,22 @@ requires a live Minecraft/GameRegistry environment to test properly.
 
 ### 5.2 Runtime / integration
 
+* **Vanilla inventory/fluid adapters are deprecated / superseded on CC, kept for OC.**
+  CC 3.3.1 ships native generics - `InventoryPeripheral` (`inventory`: `size`, `list`,
+  `getItemDetail`, `getItemLimit`, `pushItems`, `pullItems`) for any `IInventory`,
+  `GenericFluidPeripheral`/`GenericCombinedPeripheral` (`fluid_storage`) for any `IFluidHandler`,
+  and `EnergyStoragePeripheral` (`energy_storage`) - all via `DefaultPeripheralProvider`.
+  Providers are resolved in registration order (first non-null wins; exceptions swallowed), and CC
+  registers before OP (`after:ComputerCraft` + preInit ordering), so CC's generics always win and
+  OP's vanilla `IInventory`/`IFluidHandler` adapters (chest, furnace, hopper, dispenser, dropper,
+  brewing_stand, and fluid handling) never attach on CC. OP **cannot override** CC's native
+  peripherals, so there is no race condition either - lookup is sequential, single-threaded.
+  The duplicated OP names/adapters are kept unchanged for the OpenComputers path (where CC's
+  generics do not exist) and for backward compatibility. Documentation (`default_names.txt`,
+  `PeripheralProvider`/`PeripheralTypeId` Javadoc, `op_dump.xsl`, README) marks them deprecated/
+  superseded instead of user-visible. Removing them wholesale would drop inventory/fluid access
+  for OC computers, so that trade-off was deliberately not taken.
+
 * **`AdapterRegistryWrapper`** is now only a thin registration facade; the `registerInline` method is a
   deprecated no-op. It is fine to keep for binary compatibility, but a future API bump could remove it.
 * **`LuaReflectionHelper`** exposes raw reflection metadata and is only enabled by `dev.enableDevMethods`.
@@ -347,6 +364,22 @@ requires a live Minecraft/GameRegistry environment to test properly.
 * **The in-game CC suite now covers both a direct `ServerComputer` and a placed `ComputerCraft.Blocks.computer`
   / `TileComputer`.** If ComputerCraft changes its block internals, the block-level test is the canary.
 
+### 5.4 Bundled Lua programs
+
+* **Removed `twitter`.** It requires the external OpenGlasses `glass` peripheral and scraped a 2013-era
+  `twitter.com` HTML layout that no longer exists. Shipping a program that cannot work is worse than removing
+  it; the file is still available in the repository history if needed.
+* **`docs`, `github`, and `multiperipheral` are covered by `LuaScriptsTest`,
+  which compiles them with ComputerCraft's own Cobalt parser and executes the pure logic against stubbed APIs.
+  `docs` and `multiperipheral` are additionally loaded and run against a real CC computer in `gameTestServer`.
+* **`github` now uses `raw.githubusercontent.com`** (the old `raw.github.com` host redirects), validates the
+  `run` argument before indexing it, reports HTTP/read/write failures without throwing, and no longer crashes
+  when `fs.open` cannot create the destination.
+* **`multiperipheral` had a classic Lua closure-capture bug**: every generated method called whichever method
+  name the loop finished on. It also leaked `table.reduce`, required the unrelated `rs` API at load time, and
+  its `tostring` recursively called a missing method. It now dispatches per call, de-duplicates targets, and
+  supports both `os.loadAPI` and `require`.
+
 ---
 
 ## 6. Verification performed
@@ -357,7 +390,7 @@ test launcher.
 ```text
 ./gradlew spotlessCheck                              PASS
 ./gradlew checkstyleMain checkstyleTest              PASS
-./gradlew test                                       PASS (323 tests, 0 failures)
+./gradlew test                                       PASS (331 tests, 0 failures)
 ./gradlew jacocoTestReport                           PASS
 ./gradlew jacocoTestCoverageVerification             PASS (65 % line / 50 % branch floor)
 ./gradlew build                                      PASS

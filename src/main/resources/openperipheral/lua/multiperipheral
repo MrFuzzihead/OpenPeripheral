@@ -1,74 +1,109 @@
-local sideNames = rs.getSides()
+-- Wrap multiple peripherals behind one object.
+--
+-- Usage (os.loadAPI):
+--   os.loadAPI("/openp/multiperipheral")
+--   local multi = new()
+--   multi:wrap("left", "right")
+--   local results = multi:ping()
+--
+-- This file can also be loaded with require(), which returns { new = new }.
 
-table.reduce = function (list, fn) 
-    local acc
-    for k, v in ipairs(list) do
-        if 1 == k then
-            acc = v
-        else
-            acc = fn(acc, v)
-        end 
-    end 
-    return acc 
+local multiperipheral = {}
+
+local function hasMethod(name, methodName)
+    local methods = peripheral.getMethods(name)
+    if not methods then
+        return false
+    end
+
+    for _, candidate in ipairs(methods) do
+        if candidate == methodName then
+            return true
+        end
+    end
+    return false
 end
 
-local multiperipheral = {
-
-  -- wrap multiple targets at once
-  wrap = function (self, ...)
-    local meta = getmetatable(self)
-    for k, name in pairs({...}) do
-      table.insert(self.names, name)
-      for k2, methodName in pairs(peripheral.getMethods(name)) do
-        meta.__index[methodName] = function (a, ...)
-          local returnVal = {}
-          for k3, pName in pairs(a.names) do
-            for k4, mName in pairs(peripheral.getMethods(pName)) do
-              if mName == methodName then
-                table.insert(returnVal, peripheral.call(pName, methodName, ...))
-              end
-            end
-          end
-          return returnVal
+local function dispatch(self, methodName, ...)
+    local result = {}
+    for _, name in ipairs(self.names) do
+        if hasMethod(name, methodName) then
+            table.insert(result, peripheral.call(name, methodName, ...))
         end
-      end
+    end
+    return result
+end
+
+-- Wrap multiple targets at once.
+function multiperipheral:wrap(...)
+    for _, name in ipairs({...}) do
+        if type(name) == "string" and not self.targets[name] then
+            self.targets[name] = true
+            table.insert(self.names, name)
+
+            local methods = peripheral.getMethods(name)
+            if methods then
+                for _, methodName in ipairs(methods) do
+                    self.methods[methodName] = true
+                end
+            end
+        end
     end
     return self
-  end,
-  
-  -- wrap multiple targets by their type
-  types = function(self, ...)
-    local checkTypes = {}
-    local addNames = {}
+end
 
-    for _,v in ipairs({...}) do
-      checkTypes[v] = true
+-- Wrap multiple targets by their type.
+function multiperipheral:types(...)
+    local wanted = {}
+    for _, expectedType in ipairs({...}) do
+        wanted[expectedType] = true
     end
 
-    for _,name in pairs(peripheral.getNames()) do
-      if checkTypes[peripheral.getType(name)] then
-        addNames[#addNames+1] = name
-      end
+    local names = {}
+    for _, name in ipairs(peripheral.getNames()) do
+        if wanted[peripheral.getType(name)] then
+            table.insert(names, name)
+        end
     end
 
-    return self:wrap(unpack(addNames))
-  end,
-  
-  getNames = function(self)
-    return self.names
-  end
+    return self:wrap(unpack(names))
+end
 
-}
+function multiperipheral:getNames()
+    local result = {}
+    for index, name in ipairs(self.names) do
+        result[index] = name
+    end
+    return result
+end
 
 local gmetatable = {
-  __index = multiperipheral,
-  __tostring = function(g) return g:tostring() end,
+    __index = function(self, key)
+        if multiperipheral[key] ~= nil then
+            return multiperipheral[key]
+        end
+
+        if self.methods[key] then
+            return function(target, ...)
+                return dispatch(target, key, ...)
+            end
+        end
+
+        return nil
+    end,
+    __tostring = function(self)
+        return "multiperipheral(" .. table.concat(self.names, ",") .. ")"
+    end
 }
 
 function new()
-  local g = {
-    names = {}
-  }
-  setmetatable(g, gmetatable)
-  return g
+    local g = {
+        names = {},
+        targets = {},
+        methods = {}
+    }
+    setmetatable(g, gmetatable)
+    return g
 end
+
+return { new = new }

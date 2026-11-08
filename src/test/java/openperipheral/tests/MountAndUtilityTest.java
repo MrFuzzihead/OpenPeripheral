@@ -77,7 +77,6 @@ public class MountAndUtilityTest {
         Assert.assertTrue(entries.contains("docs"));
         Assert.assertTrue(entries.contains("github"));
         Assert.assertTrue(entries.contains("multiperipheral"));
-        Assert.assertTrue(entries.contains("twitter"));
 
         final long size = mount.getSize("docs");
         Assert.assertTrue(size > 0);
