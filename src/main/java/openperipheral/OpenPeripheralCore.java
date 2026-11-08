@@ -15,6 +15,7 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLInterModComms;
 import cpw.mods.fml.common.event.FMLLoadCompleteEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerStartedEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import openmods.Log;
 import openmods.Mods;
@@ -144,6 +145,12 @@ public class OpenPeripheralCore {
                 }
             }
         }
+    }
+
+    @EventHandler
+    public void serverStarted(FMLServerStartedEvent evt) {
+        // Lets the CI smoke-test hook shut the dedicated server down only after it is fully up.
+        SmokeTestHook.notifyServerStarted();
     }
 
     @EventHandler

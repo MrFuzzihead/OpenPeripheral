@@ -106,6 +106,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb libgl1-mesa-dri mesa-utils
+          # lwjgl3ify's first-run desktop-entry creation requires the XDG data dir to exist.
+          mkdir -p "$HOME/.local/share"
 
       - name: Boot client and open the config GUI
         env:
@@ -146,6 +148,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb libgl1-mesa-dri mesa-utils
+          # lwjgl3ify's first-run desktop-entry creation requires the XDG data dir to exist.
+          mkdir -p "$HOME/.local/share"
 
       - name: Boot client and verify FML load complete
         env:
