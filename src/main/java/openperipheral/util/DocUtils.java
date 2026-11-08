@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import joptsimple.internal.Strings;
 import openmods.utils.CachedFactory;
 import openperipheral.adapter.IMethodDescription;
 import openperipheral.adapter.IMethodDescription.IArgumentDescription;
@@ -137,7 +137,10 @@ public class DocUtils {
         builder.append(type);
         builder.append("\n\n");
 
-        final String docText = DOC_TEXT_CACHE.getOrCreate(cls);
+        final String docText;
+        synchronized (DOC_TEXT_CACHE) {
+            docText = DOC_TEXT_CACHE.getOrCreate(cls);
+        }
         if (!Strings.isNullOrEmpty(docText)) {
             builder.append(docText);
             builder.append("\n\n");

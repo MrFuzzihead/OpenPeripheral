@@ -126,8 +126,6 @@ public class CommonMethodsBuilder {
         av.visitEnd();
         // TODO: getter/setter
 
-        av.visitEnd();
-
         wrap.visitCode();
 
         wrap.visitVarInsn(Opcodes.ALOAD, 0); // this
@@ -194,7 +192,11 @@ public class CommonMethodsBuilder {
         mv.visitFieldInsn(Opcodes.GETFIELD, clsName, TARGET_FIELD_NAME, targetType.getDescriptor());
 
         Type[] args = method.getArgumentTypes();
-        for (int i = 0; i < args.length; i++) mv.visitVarInsn(args[i].getOpcode(Opcodes.ILOAD), i + 1);
+        int localSlot = 1; // slot 0 is 'this'
+        for (Type arg : args) {
+            mv.visitVarInsn(arg.getOpcode(Opcodes.ILOAD), localSlot);
+            localSlot += arg.getSize();
+        }
 
         mv.visitMethodInsn(
             Opcodes.INVOKEINTERFACE,

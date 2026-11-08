@@ -15,10 +15,9 @@ public class ConverterGameProfileOutbound extends SimpleOutboundConverter<GamePr
 
         Map<String, Object> map = Maps.newHashMap();
         map.put("name", profile.getName());
-        map.put(
-            "uuid",
-            profile.getId()
-                .toString());
+        // Offline-mode GameProfiles have no id. Converting them must not throw.
+        final java.util.UUID id = profile.getId();
+        map.put("uuid", id != null ? id.toString() : null);
         return map;
     }
 

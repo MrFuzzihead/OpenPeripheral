@@ -13,7 +13,7 @@ public class StringMount implements IMount {
     private final String contents;
 
     public StringMount(String text) {
-        this.contents = text;
+        this.contents = text != null ? text : "";
     }
 
     @Override
@@ -31,7 +31,7 @@ public class StringMount implements IMount {
 
     @Override
     public long getSize(String path) {
-        return contents.length();
+        return contents.getBytes(Charsets.UTF_8).length;
     }
 
     @Override

@@ -1,6 +1,8 @@
 package openperipheral.interfaces.cc.wrappers;
 
 import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.logging.log4j.Level;
 
@@ -36,6 +38,7 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral, IPeriphe
 
     private static final String MOUNT_NAME = "openp";
     private static final IMount MOUNT = new UtilsResourceMount();
+    private static final ConcurrentMap<Class<?>, String> DOC_TEXT_CACHE = new ConcurrentHashMap<Class<?>, String>();
     private final Object[] NULL = new Object[0];
 
     protected final String type;
@@ -56,7 +59,16 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral, IPeriphe
         this.methods = methods;
         this.type = PeripheralTypeProvider.INSTANCE.generateType(target);
         this.target = target;
-        this.docMount = new StringMount(DocUtils.createPeripheralHelpText(target.getClass(), type, methods));
+
+        // Help text is per adapted class. Building it for every TE instance is pure overhead.
+        final Class<?> targetClass = target.getClass();
+        String helpText = DOC_TEXT_CACHE.get(targetClass);
+        if (helpText == null) {
+            helpText = DocUtils.createPeripheralHelpText(targetClass, type, methods);
+            final String previous = DOC_TEXT_CACHE.putIfAbsent(targetClass, helpText);
+            if (previous != null) helpText = previous;
+        }
+        this.docMount = new StringMount(helpText);
     }
 
     @Override
@@ -86,6 +98,9 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral, IPeriphe
         } catch (InterruptedException e) {
             throw e;
         } catch (LuaException e) {
+            throw e;
+        } catch (Error e) {
+            // OutOfMemoryError/StackOverflowError must not be hidden from the JVM.
             throw e;
         } catch (Throwable e) {
             String methodName = methods.getMethodName(methodIndex);
@@ -184,7 +199,10 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral, IPeriphe
         computer.mount(MOUNT_NAME, AdapterPeripheral.MOUNT);
         computer.mount("rom/help/" + computer.getAttachmentName(), docMount);
         if (target instanceof IAttachable) {
-            IArchitectureAccess access = accessCache.getOrCreate(computer);
+            final IArchitectureAccess access;
+            synchronized (accessCache) {
+                access = accessCache.getOrCreate(computer);
+            }
             ((IAttachable) target).addComputer(access);
         }
         if (target instanceof IComputerCraftAttachable) ((IComputerCraftAttachable) target).addComputer(computer);
@@ -193,7 +211,10 @@ public class AdapterPeripheral implements IPeripheral, IOpenPeripheral, IPeriphe
     @Override
     public void detach(IComputerAccess computer) {
         if (target instanceof IAttachable) {
-            IArchitectureAccess access = accessCache.remove(computer);
+            final IArchitectureAccess access;
+            synchronized (accessCache) {
+                access = accessCache.remove(computer);
+            }
             if (access != null) ((IAttachable) target).removeComputer(access);
         }
 

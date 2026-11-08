@@ -33,6 +33,9 @@ public class SynchronousExecutor {
                 return task.execute();
             } catch (LuaException e) {
                 throw e;
+            } catch (Error e) {
+                // Never convert fatal JVM errors into a script-visible LuaException.
+                throw e;
             } catch (Throwable t) {
                 // Result types are converted by the Lua bridge, so only failures need rewriting here
                 throw new LuaException(AdapterLogicException.getMessageForThrowable(t));

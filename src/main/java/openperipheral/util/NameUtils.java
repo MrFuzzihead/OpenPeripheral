@@ -11,13 +11,13 @@ public class NameUtils {
     private static Map<String, Class<? extends TileEntity>> teNameToClass;
     private static Map<Class<? extends TileEntity>, String> teClassToName;
 
-    public static Map<Class<? extends TileEntity>, String> getClassToNameMap() {
+    public static synchronized Map<Class<? extends TileEntity>, String> getClassToNameMap() {
         if (teClassToName == null) teClassToName = ReflectionHelper
             .getPrivateValue(TileEntity.class, null, "classToNameMap", "field_145853_j");
         return teClassToName;
     }
 
-    public static Map<String, Class<? extends TileEntity>> getNameToClassMap() {
+    public static synchronized Map<String, Class<? extends TileEntity>> getNameToClassMap() {
         if (teNameToClass == null) teNameToClass = ReflectionHelper
             .getPrivateValue(TileEntity.class, null, "nameToClassMap", "field_145855_i");
         return teNameToClass;

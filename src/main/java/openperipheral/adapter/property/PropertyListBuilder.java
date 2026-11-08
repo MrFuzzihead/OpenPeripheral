@@ -195,7 +195,7 @@ public class PropertyListBuilder {
             GetTypeFromField.class,
             property.keyType(),
             GetTypeFromField.class,
-            ArgType.AUTO);
+            property.valueType());
     }
 
     public void addProperty(IndexedCallbackProperty property) {
@@ -399,8 +399,8 @@ public class PropertyListBuilder {
         descriptionBuilder.addIndexParameter(indexedParameters.typeInfo);
         if (!Strings.isNullOrEmpty(singleParameters.setterDescription))
             descriptionBuilder.overrideDescription(singleParameters.setterDescription);
-        else if (!Strings.isNullOrEmpty(singleParameters.setterDescription))
-            descriptionBuilder.overrideDescription(singleParameters.setterDescription);
+        else if (!Strings.isNullOrEmpty(indexedParameters.setterDescription))
+            descriptionBuilder.overrideDescription(indexedParameters.setterDescription);
         final IMethodDescription description = descriptionBuilder.buildSetter();
         final IPropertyExecutor caller = new MergedSetterExecutor(
             field,

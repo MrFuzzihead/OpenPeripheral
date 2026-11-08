@@ -155,6 +155,8 @@ public class ItemStackMetadataBuilder implements IItemStackPartialMetaBuilder {
     }
 
     public static String getRawNameForStack(ItemStack is) {
+        if (is == null) return "unknown";
+
         try {
             return is.getUnlocalizedName()
                 .toLowerCase(Locale.ENGLISH);
@@ -176,6 +178,7 @@ public class ItemStackMetadataBuilder implements IItemStackPartialMetaBuilder {
     public Map<String, Object> getBasicItemStackMetadata(ItemStack itemstack) {
         if (itemstack == null) return NULL;
         Item item = itemstack.getItem();
+        if (item == null) return NULL;
 
         return createBasicProperties(item, itemstack);
     }
@@ -184,6 +187,7 @@ public class ItemStackMetadataBuilder implements IItemStackPartialMetaBuilder {
     public Map<String, Object> getItemStackMetadata(ItemStack itemstack) {
         if (itemstack == null) return NULL;
         Item item = itemstack.getItem();
+        if (item == null) return NULL;
 
         Map<String, Object> map = createBasicProperties(item, itemstack);
 
@@ -194,6 +198,7 @@ public class ItemStackMetadataBuilder implements IItemStackPartialMetaBuilder {
 
     @Override
     public Object getItemStackMetadata(String key, ItemStack stack) {
+        if (stack == null) return null;
         Item item = stack.getItem();
         if (item == null) return null;
 
@@ -205,7 +210,11 @@ public class ItemStackMetadataBuilder implements IItemStackPartialMetaBuilder {
 
     @Override
     public Set<String> getKeys(ItemStack target) {
-        return ImmutableSet.copyOf(getProviders(target.getItem(), target).keySet());
+        if (target == null) return ImmutableSet.of();
+        Item item = target.getItem();
+        if (item == null) return ImmutableSet.of();
+
+        return ImmutableSet.copyOf(getProviders(item, target).keySet());
     }
 
     @Override

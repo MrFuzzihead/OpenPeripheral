@@ -184,7 +184,9 @@ public class EnvironmentMethodsFactory<T> extends ComposedMethodsFactory<IEnviro
 
         for (Class<?> intf : result) Preconditions.checkArgument(
             intf.isAssignableFrom(targetClass),
-            "Class %s tries to expose interface %s, but does not implement it");
+            "Class %s tries to expose interface %s, but does not implement it",
+            targetClass,
+            intf);
 
         return result;
     }

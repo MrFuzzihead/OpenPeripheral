@@ -1,9 +1,9 @@
 package openperipheral.converter;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 
 import openperipheral.api.converter.IConverter;
 import openperipheral.api.converter.IConverterManager;
@@ -17,7 +17,7 @@ public class TypeConvertersProvider implements IConverterManager {
 
     public static final TypeConvertersProvider INSTANCE = new TypeConvertersProvider();
 
-    private final Map<String, IConverter> converters = Maps.newHashMap();
+    private final Map<String, IConverter> converters = new ConcurrentHashMap<String, IConverter>();
 
     public void registerConverter(String architecture, IConverter converter) {
         converters.put(architecture, converter);

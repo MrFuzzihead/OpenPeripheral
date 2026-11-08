@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.security.ProtectionDomain;
 import java.util.Collection;
+import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -58,7 +59,7 @@ public class DocBuilder {
             final AdapterSourceName nameAnnotation = cls.getAnnotation(AdapterSourceName.class);
             final String name = nameAnnotation != null ? nameAnnotation.value()
                 : cls.getSimpleName()
-                    .toLowerCase();
+                    .toLowerCase(Locale.ENGLISH);
 
             Document doc = element.getOwnerDocument();
             element.appendChild(createProperty(doc, "name", name));
@@ -76,7 +77,10 @@ public class DocBuilder {
             Document doc = element.getOwnerDocument();
             element.appendChild(createProperty(doc, "teName", teName));
 
-            String docText = DocUtils.DOC_TEXT_CACHE.getOrCreate(cls);
+            final String docText;
+            synchronized (DocUtils.DOC_TEXT_CACHE) {
+                docText = DocUtils.DOC_TEXT_CACHE.getOrCreate(cls);
+            }
             if (!Strings.isNullOrEmpty(docText)) element.appendChild(createCDataProperty(doc, "docText", docText));
 
             String userName = PeripheralTypeProvider.INSTANCE.getType(cls);

@@ -136,7 +136,8 @@ public abstract class TypeConverter implements IConverter {
     public Object toJava(Object obj, Type expected) {
         if (obj == null) {
             final TypeToken<?> type = TypeToken.of(expected);
-            Preconditions.checkArgument(type.isPrimitive(), "Type %s cannot be nil", type);
+            // Lua nil is a valid value for any reference type, but it cannot be stored in a primitive.
+            Preconditions.checkArgument(!type.isPrimitive(), "Type %s cannot be nil", type);
             return null;
         }
 
@@ -158,7 +159,13 @@ public abstract class TypeConverter implements IConverter {
     @SuppressWarnings("unchecked")
     public <T> T toJava(Object obj, Class<? extends T> cls) {
         Object result = toJava(obj, (Type) cls);
-        Preconditions.checkArgument(cls.isInstance(result), "Conversion of %s to type %s failed", obj, cls);
+        if (result == null) {
+            Preconditions.checkArgument(!cls.isPrimitive(), "Conversion of nil to primitive type %s failed", cls);
+            return null;
+        }
+
+        final Class<?> boxed = openmods.reflection.TypeUtils.toObjectType(cls);
+        Preconditions.checkArgument(boxed.isInstance(result), "Conversion of %s to type %s failed", obj, cls);
         return (T) result;
     }
 

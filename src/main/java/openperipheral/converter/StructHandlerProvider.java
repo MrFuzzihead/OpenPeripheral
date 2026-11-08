@@ -241,7 +241,7 @@ public class StructHandlerProvider {
                     final int index = ((Number) key).intValue() - indexOffset;
 
                     Preconditions.checkArgument(
-                        index < indexedFields.size(),
+                        index >= 0 && index < indexedFields.size(),
                         "Index %s is outside of allowed range for structure",
                         index);
                     final IFieldHandler f = indexedFields.get(index);
@@ -350,11 +350,11 @@ public class StructHandlerProvider {
         }
     };
 
-    public boolean isStruct(Class<?> cls) {
+    public synchronized boolean isStruct(Class<?> cls) {
         return checkedClasses.getOrCreate(cls);
     }
 
-    public IStructHandler getHandler(Class<?> cls) {
+    public synchronized IStructHandler getHandler(Class<?> cls) {
         return handlers.getOrCreate(cls);
     }
 

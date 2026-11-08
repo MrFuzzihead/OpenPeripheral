@@ -17,7 +17,7 @@ public class ConverterStructInbound extends GenericInboundConverterAdapter {
 
     @Override
     protected Object toJava(IConverter converter, Object obj, Class<?> expected) {
-        if (obj instanceof Map && StructHandlerProvider.instance.isStruct(expected)) {
+        if (obj instanceof Map && expected != null && StructHandlerProvider.instance.isStruct(expected)) {
             final Map<?, ?> data = (Map<?, ?>) obj;
             final IStructHandler structConverter = StructHandlerProvider.instance.getHandler(expected);
             return structConverter.toJava(converter, data, indexOffset);

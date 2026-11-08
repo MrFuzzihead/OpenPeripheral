@@ -27,6 +27,7 @@ public class ConverterItemStackInbound extends GenericInboundConverterAdapter {
             String modId = parts[0];
             String name = parts[1];
             Item item = GameRegistry.findItem(modId, name);
+            Preconditions.checkArgument(item != null, "Unknown item id '%s'", id);
 
             int quantity = getIntValue(m, "qty", 1);
             int dmg = getIntValue(m, "dmg", 0);

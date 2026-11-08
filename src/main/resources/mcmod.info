@@ -6,8 +6,8 @@
     "description": "Converts many blocks into ComputerCraft peripherals!",
     "version": "${modVersion}",
     "mcversion": "${minecraftVersion}",
-    "url": "https://github.com/MrFuzzihead/https://github.com/MrFuzzihead/OpenPeripheral",
-    "updateUrl": "https://github.com/MrFuzzihead/https://github.com/MrFuzzihead/OpenPeripheral/releases/latest",
+    "url": "https://github.com/MrFuzzihead/OpenPeripheral",
+    "updateUrl": "https://github.com/MrFuzzihead/OpenPeripheral/releases/latest",
     "authorList": [
       "MrFuzzihead",
       "Mikeemoo",

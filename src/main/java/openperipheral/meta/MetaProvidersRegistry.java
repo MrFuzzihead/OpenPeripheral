@@ -44,7 +44,7 @@ public class MetaProvidersRegistry<P extends IMetaProvider<?>> {
         this.baseClass = baseClass;
     }
 
-    public void addProvider(P provider) {
+    public synchronized void addProvider(P provider) {
         final Class<?> targetClass = provider.getTargetClass();
 
         Preconditions.checkArgument(
@@ -58,7 +58,7 @@ public class MetaProvidersRegistry<P extends IMetaProvider<?>> {
         providersCache.clear();
     }
 
-    public Map<String, P> getProviders(Class<?> cls) {
+    public synchronized Map<String, P> getProviders(Class<?> cls) {
         Map<String, P> providerMap = providersCache.get(cls);
 
         if (providerMap == null) {

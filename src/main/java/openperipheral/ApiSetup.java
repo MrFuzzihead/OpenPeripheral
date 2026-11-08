@@ -95,10 +95,7 @@ public class ApiSetup {
                 t);
         }
 
-        Log.info(
-            "OPC API v. %s provideded by OpenPeripheralCore, (ApiAccess source: %s)",
-            presentApiVersion,
-            apiSource);
+        Log.info("OPC API v. %s provided by OpenPeripheralCore, (ApiAccess source: %s)", presentApiVersion, apiSource);
     }
 
 }

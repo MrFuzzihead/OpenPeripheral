@@ -33,7 +33,8 @@ public class ConverterSetInbound implements IGenericInboundTypeConverter {
     public Object toJava(IConverter registry, Object obj, Type expected) {
         if (obj instanceof Map) {
             final TypeToken<?> type = TypeToken.of(expected);
-            if (type.getRawType() == Set.class) {
+            final Class<?> rawType = type.getRawType();
+            if (rawType.isAssignableFrom(java.util.HashSet.class)) {
                 final Type valueType = type.resolveType(TYPE_PARAM)
                     .getType();
 

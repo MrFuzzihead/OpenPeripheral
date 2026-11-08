@@ -8,7 +8,7 @@ import openperipheral.meta.ItemStackMetadataBuilder;
 
 public class ConverterItemStackOutbound extends SimpleOutboundConverter<ItemStack> {
 
-    private ItemStackMetadataBuilder BUILDER = new ItemStackMetadataBuilder();
+    private static final ItemStackMetadataBuilder BUILDER = new ItemStackMetadataBuilder();
 
     @Override
     public Object convert(IConverter registry, ItemStack stack) {

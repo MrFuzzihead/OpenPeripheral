@@ -18,7 +18,8 @@ public class ConverterMapInbound implements IGenericInboundTypeConverter {
 
         if (obj instanceof Map) {
             final TypeToken<?> type = TypeToken.of(expected);
-            if (type.getRawType() == Map.class) {
+            final Class<?> rawType = type.getRawType();
+            if (rawType.isAssignableFrom(java.util.HashMap.class)) {
                 final Type keyType = type.resolveType(TypeUtils.MAP_KEY_PARAM)
                     .getType();
                 final Type valueType = type.resolveType(TypeUtils.MAP_VALUE_PARAM)

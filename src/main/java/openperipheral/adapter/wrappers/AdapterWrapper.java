@@ -1,10 +1,13 @@
 package openperipheral.adapter.wrappers;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import openmods.Log;
 import openperipheral.adapter.AnnotationMetaExtractor;
@@ -63,19 +66,34 @@ public abstract class AdapterWrapper {
 
     protected abstract void prepareDeclaration(MethodDeclaration decl);
 
+    private static List<Method> collectAdapterMethods(Class<?> adapterClass) {
+        final Map<String, Method> methods = Maps.newLinkedHashMap();
+
+        // Walk the hierarchy most-derived first so an override wins, then skip shadowed signatures.
+        for (Class<?> cls = adapterClass; cls != null && cls != Object.class; cls = cls.getSuperclass()) {
+            final Method[] declared;
+            try {
+                declared = cls.getDeclaredMethods();
+            } catch (Throwable t) {
+                Log.severe(t, "Can't get methods of adapter superclass %s (possible sideness fail), skipping", cls);
+                continue;
+            }
+
+            for (Method method : declared) {
+                if (method.isBridge() || method.isSynthetic()) continue;
+
+                final String signature = method.getName() + Arrays.toString(method.getParameterTypes());
+                if (!methods.containsKey(signature)) methods.put(signature, method);
+            }
+        }
+
+        return Lists.newArrayList(methods.values());
+    }
+
     protected List<IMethodExecutor> buildMethodList() {
         List<IMethodExecutor> result = Lists.newArrayList();
 
-        Method[] clsMethods;
-        try {
-            clsMethods = adapterClass.getDeclaredMethods();
-        } catch (Throwable t) {
-            // Trust no one. We got report about ClassNotFound from this place
-            Log.severe(t, "Can't get adapter %s methods (possible sideness fail), bailing out", adapterClass);
-            return result;
-        }
-
-        for (Method method : clsMethods) {
+        for (Method method : collectAdapterMethods(adapterClass)) {
             try {
                 ScriptCallable callableAnn = method.getAnnotation(ScriptCallable.class);
                 if (callableAnn == null) continue;

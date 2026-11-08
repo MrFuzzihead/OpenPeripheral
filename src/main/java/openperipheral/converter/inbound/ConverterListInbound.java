@@ -1,6 +1,7 @@
 package openperipheral.converter.inbound;
 
 import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +47,9 @@ public class ConverterListInbound implements IGenericInboundTypeConverter {
     public Object toJava(IConverter registry, Object obj, Type expected) {
         if (obj instanceof Map) {
             final TypeToken<?> type = TypeToken.of(expected);
-            if (type.getRawType() == List.class) {
+            final Class<?> rawType = type.getRawType();
+            if (rawType == Collection.class || rawType == List.class
+                || rawType.isAssignableFrom(java.util.ArrayList.class)) {
                 final Object[] elements = converter.convertToContainer(registry, obj, type);
                 return Lists.newArrayList(elements);
             }

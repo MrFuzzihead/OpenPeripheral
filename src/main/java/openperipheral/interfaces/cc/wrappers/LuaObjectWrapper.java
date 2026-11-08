@@ -45,6 +45,8 @@ public class LuaObjectWrapper {
                 throw e;
             } catch (LuaException e) {
                 throw e;
+            } catch (Error e) {
+                throw e;
             } catch (Throwable e) {
                 String methodName = methods.getMethodName(methodIndex);
                 Log.log(

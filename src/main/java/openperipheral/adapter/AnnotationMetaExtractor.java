@@ -43,7 +43,8 @@ public class AnnotationMetaExtractor {
     private static Set<String> getArchBlacklist(AnnotatedElement element, Set<String> defaultValue) {
         if (element == null) return defaultValue;
         ExcludeArchitecture blacklist = element.getAnnotation(ExcludeArchitecture.class);
-        return blacklist != null ? ImmutableSet.copyOf(blacklist.value()) : defaultValue;
+        return blacklist != null ? ImmutableSet.copyOf(Sets.union(defaultValue, Sets.newHashSet(blacklist.value())))
+            : defaultValue;
     }
 
     private static Set<String> getFeatureGroup(AnnotatedElement element, Set<String> prevValue) {

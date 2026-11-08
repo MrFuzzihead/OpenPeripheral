@@ -34,18 +34,22 @@
  * For more details, see https://docs.gradle.org/8.0.1/userguide/java_library_plugin.html#sec:java_library_configurations_graph
  */
 dependencies {
-    runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.9.0-GTNH:dev")
+    runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.9.2-GTNH:dev")
 
-    api("com.github.MrFuzzihead:Computercraft-Legacy:3.3.0:dev")
+    api("com.github.MrFuzzihead:Computercraft-Legacy:3.3.1:dev")
     // GTNH keeps OpenModsLib at 0.10.x ("NEVER LET IT GO ABOVE 0.10.x", other mods break on 0.11).
     // Building against 0.11.0 makes FML require OpenMods [0.11.0,0.12.0) and the mod refuses to
     // start in packs shipping 0.10.15. 0.10.15 and 0.11.0 are the same commit, so 0.10.15 is safe.
     api("com.github.GTNewHorizons:OpenModsLib:0.10.15:dev")
     compileOnly("com.github.GTNewHorizons:OpenComputers:1.13.0-GTNH:dev")
 
-    // src/test uses JUnit 4 + the Mockito 1.x API (org.mockito.Matchers, InvocationOnMock#getArgumentAt)
+    // JUnit 4.13.2 is the newest 4.x release. Mockito 4.11.0 is the newest Mockito that still supports
+    // a Java 8 runtime (Mockito 5 requires Java 11), and the test task intentionally runs on Java 8 so the
+    // production bytecode target is exercised by the same JVM the mod supports.
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.mockito:mockito-core:1.10.19")
+    testImplementation("org.mockito:mockito-core:4.11.0")
+    // Mockito 4 needs this artifact to mock final classes (e.g. Minecraft's ItemStack) on Java 8.
+    testImplementation("org.mockito:mockito-inline:4.11.0")
 
     // OpenComputers is compileOnly for the mod itself, but the tests exercise the OC adapter directly
     testImplementation("com.github.GTNewHorizons:OpenComputers:1.13.0-GTNH:dev")

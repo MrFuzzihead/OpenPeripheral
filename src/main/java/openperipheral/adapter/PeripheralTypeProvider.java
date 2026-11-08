@@ -42,7 +42,7 @@ public class PeripheralTypeProvider implements IPeripheralTypeProvider {
 
     private File file;
 
-    public void initialize(File configDir) {
+    public synchronized void initialize(File configDir) {
         readDefaultNames();
         this.file = new File(configDir, "peripheral_names.txt");
         if (file.exists()) readOverlayNames();
@@ -127,18 +127,18 @@ public class PeripheralTypeProvider implements IPeripheralTypeProvider {
         setType(cls.getName(), type);
     }
 
-    public void setType(String key, String type) {
+    public synchronized void setType(String key, String type) {
         names.put(key, type);
         writeOverlayFile();
     }
 
     @Override
-    public String getType(Class<?> cls) {
+    public synchronized String getType(Class<?> cls) {
         return names.get(cls.getName());
     }
 
     @Override
-    public String generateType(Object obj) {
+    public synchronized String generateType(Object obj) {
         if (obj == null) return "invalid";
         final Class<?> cls = obj.getClass();
         final String clsName = cls.getName();

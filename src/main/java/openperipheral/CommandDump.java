@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.ChatComponentText;
@@ -40,7 +41,7 @@ public class CommandDump extends SidedCommand {
         public void serialize(DocBuilder builder);
     }
 
-    private static final List<IArchSerializer> archSerializers = Lists.newArrayList();
+    private static final List<IArchSerializer> archSerializers = new CopyOnWriteArrayList<IArchSerializer>();
 
     public static void addArchSerializer(final String architecture, final String type, final IClassDecorator decorator,
         final ComposedMethodsFactory<? extends IMethodMap> methods) {

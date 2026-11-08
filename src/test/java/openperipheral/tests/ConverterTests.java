@@ -1,10 +1,10 @@
 package openperipheral.tests;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.notNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -42,7 +42,7 @@ public class ConverterTests {
         return new ArgumentMatcher<Type>() {
 
             @Override
-            public boolean matches(Object argument) {
+            public boolean matches(Type argument) {
                 return cls.equals(
                     TypeToken.of((Type) argument)
                         .getRawType());
@@ -56,7 +56,7 @@ public class ConverterTests {
             @SuppressWarnings("unchecked")
             @Override
             public T answer(InvocationOnMock invocation) throws Throwable {
-                return (T) invocation.getArgumentAt(0, Object.class);
+                return (T) invocation.getArgument(0, Object.class);
             }
         };
     }

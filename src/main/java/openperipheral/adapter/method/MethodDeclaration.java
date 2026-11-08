@@ -104,6 +104,13 @@ public class MethodDeclaration implements IMethodDescription {
         this.method = method;
         this.source = source;
 
+        // Adapter methods are frequently declared in non-public classes (or are non-public themselves).
+        try {
+            method.setAccessible(true);
+        } catch (SecurityException e) {
+            // The eventual invoke() will report a more specific error.
+        }
+
         this.names = getNames(method, meta);
 
         this.description = meta.description();
@@ -123,6 +130,8 @@ public class MethodDeclaration implements IMethodDescription {
 
         TypeToken<?> scopeType = TypeToken.of(rootClass);
 
+        boolean sawOptionals = false;
+
         final Annotation[][] argsAnnotations = method.getParameterAnnotations();
         for (int argIndex = 0; argIndex < methodArgs.length; argIndex++) {
             try {
@@ -141,7 +150,8 @@ public class MethodDeclaration implements IMethodDescription {
                     if (state != ArgParseState.ARG_OPTIONAL) state = ArgParseState.ARG_REQUIRED;
 
                     if (optionalStart) {
-                        Preconditions.checkState(state != ArgParseState.ENV_NAMED, "@Optional used more than once");
+                        Preconditions.checkState(!sawOptionals, "@Optionals used more than once");
+                        sawOptionals = true;
                         state = ArgParseState.ARG_OPTIONAL;
                     }
 
@@ -394,8 +404,11 @@ public class MethodDeclaration implements IMethodDescription {
 
     public void nameEnv(int index, String name, Class<?> expectedType) {
         Class<?> actualType = unnamedEnvArg.remove(index);
-        Preconditions
-            .checkState(actualType != null, "Argument at index %s not present or already named, can't name as %s");
+        Preconditions.checkState(
+            actualType != null,
+            "Argument at index %s not present or already named, can't name as %s",
+            index,
+            name);
         Preconditions.checkState(
             actualType.isAssignableFrom(expectedType),
             "Field %s (new name: %s) is expected to be %s, but has %s",
