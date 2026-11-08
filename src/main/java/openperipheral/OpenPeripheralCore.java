@@ -6,6 +6,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Configuration;
 
 import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.Mod.Instance;
@@ -14,6 +15,7 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLInterModComms;
 import cpw.mods.fml.common.event.FMLLoadCompleteEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerStartedEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import openmods.Log;
 import openmods.Mods;
@@ -46,12 +48,20 @@ public class OpenPeripheralCore {
 
     private Configuration config;
 
+    private boolean configListenerInstalled;
+
     Configuration config() {
         return config;
     }
 
     @Mod.EventHandler
     public void construct(FMLConstructionEvent evt) {
+        // Config must be available before API/module setup: the interface toggles decide which architecture
+        // modules are initialized. preInit() may run this again, but loadConfig() is idempotent.
+        final File configDir = Loader.instance()
+            .getConfigDir();
+        if (configDir != null) loadConfig(new File(configDir, ModInfo.ID + ".cfg"));
+
         ArchitectureChecker.INSTANCE.register(Constants.ARCH_COMPUTER_CRAFT, new ComputerCraftChecker());
         ArchitectureChecker.INSTANCE.register(Constants.ARCH_OPEN_COMPUTERS, new OpenComputersChecker());
 
@@ -62,22 +72,39 @@ public class OpenPeripheralCore {
         if (ArchitectureChecker.INSTANCE.isEnabled(Constants.ARCH_COMPUTER_CRAFT)) ModuleComputerCraft.init();
     }
 
-    @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent evt) {
-        apiSetup.installHolderAccess(evt.getAsmData());
-        PeripheralTypeProvider.INSTANCE.initialize(evt.getModConfigurationDirectory());
+    private void loadConfig(File configFile) {
+        if (config != null) return;
 
-        final File configFile = evt.getSuggestedConfigurationFile();
         config = new Configuration(configFile);
         ConfigProcessing.processAnnotations(ModInfo.ID, config, Config.class);
         if (config.hasChanged()) config.save();
 
         FeatureGroupManager.INSTANCE.loadBlacklist(Config.featureGroupsBlacklist);
+    }
+
+    private void installConfigListener() {
+        if (configListenerInstalled || config == null) return;
+
+        configListenerInstalled = true;
         FMLCommonHandler.instance()
             .bus()
             .register(new ConfigGuiFactory.ConfigChangeListener(config));
+    }
+
+    @Mod.EventHandler
+    public void preInit(FMLPreInitializationEvent evt) {
+        apiSetup.installHolderAccess(evt.getAsmData());
+        PeripheralTypeProvider.INSTANCE.initialize(evt.getModConfigurationDirectory());
+
+        // Usually already loaded from construct(), but keeps the event order working if Loader had no config dir yet.
+        loadConfig(evt.getSuggestedConfigurationFile());
+        installConfigListener();
 
         MinecraftForge.EVENT_BUS.register(TileEntityBlacklist.INSTANCE);
+
+        if (Config.devMethods) {
+            Log.warn("OpenPeripheral development reflection methods are enabled (dev.enableDevMethods=true)");
+        }
 
         FMLInterModComms.sendMessage(Mods.OPENCOMPUTERS, "blacklistPeripheral", IOpenPeripheral.class.getName());
 
@@ -97,6 +124,8 @@ public class OpenPeripheralCore {
     public void loadComplete(FMLLoadCompleteEvent evt) {
         if (ArchitectureChecker.INSTANCE.isEnabled(Constants.ARCH_COMPUTER_CRAFT))
             ModuleComputerCraft.registerProvider();
+
+        SmokeTestHook.scheduleExitIfRequested();
     }
 
     @EventHandler
@@ -119,7 +148,13 @@ public class OpenPeripheralCore {
     }
 
     @EventHandler
-    public void severStart(FMLServerStartingEvent evt) {
+    public void serverStarted(FMLServerStartedEvent evt) {
+        // Lets the CI smoke-test hook shut the dedicated server down only after it is fully up.
+        SmokeTestHook.notifyServerStarted();
+    }
+
+    @EventHandler
+    public void serverStart(FMLServerStartingEvent evt) {
         evt.registerServerCommand(
             new CommandDump(
                 "op_dump",

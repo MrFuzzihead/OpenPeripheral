@@ -1,6 +1,10 @@
 package openperipheral.adapter.composed;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+
+import com.google.common.collect.Lists;
 
 import openperipheral.adapter.IMethodExecutor;
 
@@ -14,10 +18,14 @@ public class IndexedMethodMap implements IMethodMap {
         this.names = new String[methodCount];
         this.methods = new IMethodExecutor[methodCount];
 
+        // Script-visible method order must be stable across JVM runs: expose a sorted name list.
+        final List<String> sortedNames = Lists.newArrayList(methods.keySet());
+        Collections.sort(sortedNames);
+
         int i = 0;
-        for (Map.Entry<String, IMethodExecutor> e : methods.entrySet()) {
-            this.names[i] = e.getKey();
-            this.methods[i] = e.getValue();
+        for (String name : sortedNames) {
+            this.names[i] = name;
+            this.methods[i] = methods.get(name);
             i++;
         }
     }
@@ -31,11 +39,11 @@ public class IndexedMethodMap implements IMethodMap {
     }
 
     public IMethodExecutor getMethod(int index) {
-        return methods[index];
+        return index >= 0 && index < methods.length ? methods[index] : null;
     }
 
     public String getMethodName(int index) {
-        return names[index];
+        return index >= 0 && index < names.length ? names[index] : null;
     }
 
     @Override

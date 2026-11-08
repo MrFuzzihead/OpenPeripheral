@@ -3,6 +3,7 @@ package openperipheral;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -37,12 +38,12 @@ public class ConfigGuiFactory implements IModGuiFactory {
     // Clone of settings, since changes have to be applied after restart
     private static FeatureGroupManager CONFIG_FEATURE_GROUP_MANAGER;
 
-    private static class FeatureConfigElement implements IConfigElement<Boolean> {
+    static class FeatureConfigElement implements IConfigElement<Boolean> {
 
         private final String architecture;
         private final String featureGroup;
 
-        private FeatureConfigElement(String architecture, String feature) {
+        FeatureConfigElement(String architecture, String feature) {
             this.architecture = architecture;
             this.featureGroup = feature;
         }
@@ -218,7 +219,7 @@ public class ConfigGuiFactory implements IModGuiFactory {
                         @Override
                         @Nullable
                         public String apply(@Nullable String input) {
-                            return input != null ? input.toLowerCase() : null;
+                            return input != null ? input.toLowerCase(Locale.ENGLISH) : null;
                         }
                     }));
             return results;
@@ -260,6 +261,9 @@ public class ConfigGuiFactory implements IModGuiFactory {
         @SubscribeEvent
         public void onConfigChange(OnConfigChangedEvent evt) {
             if (ModInfo.ID.equals(evt.modID)) {
+                if (CONFIG_FEATURE_GROUP_MANAGER == null) {
+                    CONFIG_FEATURE_GROUP_MANAGER = FeatureGroupManager.INSTANCE.copy();
+                }
                 final String[] blacklist = CONFIG_FEATURE_GROUP_MANAGER.saveBlacklist();
                 config.get(Config.CATEGORY_FEATURE_GROUPS, Config.FIELD_FEATURE_GROUPS, blacklist)
                     .set(blacklist);

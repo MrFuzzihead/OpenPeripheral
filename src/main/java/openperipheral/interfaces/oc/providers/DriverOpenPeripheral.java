@@ -1,11 +1,10 @@
 package openperipheral.interfaces.oc.providers;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
-
-import com.google.common.collect.Maps;
 
 import li.cil.oc.api.network.ManagedEnvironment;
 import openmods.Log;
@@ -14,7 +13,7 @@ import openperipheral.interfaces.oc.ModuleOpenComputers;
 
 public class DriverOpenPeripheral implements li.cil.oc.api.driver.Block {
 
-    private final Map<Class<?>, Boolean> cache = Maps.newHashMap();
+    private final Map<Class<?>, Boolean> cache = new ConcurrentHashMap<Class<?>, Boolean>();
 
     @Override
     public boolean worksWith(World world, int x, int y, int z) {

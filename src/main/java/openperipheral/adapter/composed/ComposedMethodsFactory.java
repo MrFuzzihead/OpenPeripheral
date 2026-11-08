@@ -39,11 +39,11 @@ public abstract class ComposedMethodsFactory<T extends IMethodMap> {
         this.composer = new ClassMethodsComposer(selector);
     }
 
-    public Map<Class<?>, T> listCollectedClasses() {
-        return Collections.unmodifiableMap(classes);
+    public synchronized Map<Class<?>, T> listCollectedClasses() {
+        return Collections.unmodifiableMap(Maps.newHashMap(classes));
     }
 
-    public T getAdaptedClass(Class<?> targetCls) {
+    public synchronized T getAdaptedClass(Class<?> targetCls) {
         if (invalidClasses.contains(targetCls)) throw new InvalidClassException();
 
         T value = classes.get(targetCls);

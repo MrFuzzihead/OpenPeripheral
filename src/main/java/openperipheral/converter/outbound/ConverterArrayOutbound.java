@@ -18,7 +18,7 @@ public class ConverterArrayOutbound implements IOutboundTypeConverter {
 
     @Override
     public Object fromJava(IConverter registry, Object o) {
-        if (o.getClass()
+        if (o != null && o.getClass()
             .isArray()) {
             Map<Object, Object> ret = Maps.newHashMap();
             int length = Array.getLength(o);

@@ -119,7 +119,7 @@ public class PeripheralProvider implements IPeripheralProvider {
         }
     };
 
-    private static IPeripheralFactory<TileEntity> getFactoryForClass(Class<? extends TileEntity> teClass) {
+    private static synchronized IPeripheralFactory<TileEntity> getFactoryForClass(Class<? extends TileEntity> teClass) {
         return ADAPTED_CLASSES.getOrCreate(teClass);
     }
 

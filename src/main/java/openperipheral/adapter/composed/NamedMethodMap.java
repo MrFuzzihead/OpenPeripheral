@@ -1,8 +1,11 @@
 package openperipheral.adapter.composed;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 
 import openperipheral.adapter.IMethodExecutor;
 
@@ -14,8 +17,10 @@ public class NamedMethodMap implements IMethodMap {
 
     public NamedMethodMap(Map<String, IMethodExecutor> methods) {
         this.methods = ImmutableMap.copyOf(methods);
-        this.methodNames = methods.keySet()
-            .toArray(new String[methods.size()]);
+
+        final List<String> sortedNames = Lists.newArrayList(methods.keySet());
+        Collections.sort(sortedNames);
+        this.methodNames = sortedNames.toArray(new String[sortedNames.size()]);
     }
 
     public String[] getMethodNames() {

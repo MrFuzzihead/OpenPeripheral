@@ -2,8 +2,8 @@ package openperipheral.adapter.types.classifier;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 
 import openperipheral.api.adapter.IScriptType;
@@ -29,7 +29,7 @@ public class TypeClassifier implements ITypeClassifier {
 
     public static final TypeClassifier INSTANCE = new TypeClassifier();
 
-    private final List<IGenericClassifier> classifiers = Lists.newArrayList();
+    private final List<IGenericClassifier> classifiers = new CopyOnWriteArrayList<IGenericClassifier>();
 
     public TypeClassifier() {
         registerDefaultClassifiers();

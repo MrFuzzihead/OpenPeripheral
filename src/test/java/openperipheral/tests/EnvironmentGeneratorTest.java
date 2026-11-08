@@ -1,9 +1,8 @@
 package openperipheral.tests;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyFloat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -150,7 +149,7 @@ public class EnvironmentGeneratorTest {
         when(executor.description()).thenReturn(descriptable);
 
         IMethodCall call = mock(IMethodCall.class);
-        when(executor.startCall(anyObject())).thenReturn(call);
+        when(executor.startCall(any())).thenReturn(call);
 
         methods.put(name, Pair.of(executor, call));
     }
@@ -204,7 +203,7 @@ public class EnvironmentGeneratorTest {
     }
 
     private static void verifyCallThrough(final TargetClass wrapped, Object wrapper) {
-        when(wrapped.testB(anyInt())).thenReturn("abcd");
+        when(wrapped.testB(anyFloat())).thenReturn("abcd");
 
         InterfaceA aa = (InterfaceA) wrapper;
         Assert.assertEquals(aa.testB(3), "abcd");

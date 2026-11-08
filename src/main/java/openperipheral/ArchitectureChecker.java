@@ -3,9 +3,9 @@ package openperipheral;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 
 import openperipheral.api.architecture.IArchitectureChecker;
 
@@ -18,7 +18,7 @@ public class ArchitectureChecker implements IArchitectureChecker {
         public boolean isEnabled();
     }
 
-    private Map<String, IArchitecturePredicate> architectureCheckers = Maps.newHashMap();
+    private final Map<String, IArchitecturePredicate> architectureCheckers = new ConcurrentHashMap<String, IArchitecturePredicate>();
 
     @Override
     public Set<String> knownArchitectures() {

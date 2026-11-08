@@ -1,6 +1,7 @@
 package openperipheral.adapter.composed;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,7 +27,7 @@ public class ClassMethodsListBuilder {
 
     private final AdapterRegistry manager;
 
-    private final Map<String, IMethodExecutor> methods = Maps.newHashMap();
+    private final Map<String, IMethodExecutor> methods = Maps.newLinkedHashMap();
 
     private final Set<String> sources = Sets.newHashSet();
 
@@ -102,6 +103,6 @@ public class ClassMethodsListBuilder {
         }
 
         return cls.getName()
-            .toLowerCase();
+            .toLowerCase(Locale.ENGLISH);
     }
 }

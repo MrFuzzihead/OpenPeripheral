@@ -1,6 +1,9 @@
 package openperipheral.converter.inbound;
 
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -46,9 +49,23 @@ public class ConverterListInbound implements IGenericInboundTypeConverter {
     public Object toJava(IConverter registry, Object obj, Type expected) {
         if (obj instanceof Map) {
             final TypeToken<?> type = TypeToken.of(expected);
-            if (type.getRawType() == List.class) {
+            final Class<?> rawType = type.getRawType();
+            if (rawType == Collection.class || rawType == List.class || rawType.isAssignableFrom(ArrayList.class)) {
                 final Object[] elements = converter.convertToContainer(registry, obj, type);
                 return Lists.newArrayList(elements);
+            }
+
+            if (!rawType.isInterface() && !Modifier.isAbstract(rawType.getModifiers())
+                && List.class.isAssignableFrom(rawType)) {
+                final Object[] elements = converter.convertToContainer(registry, obj, type);
+                try {
+                    @SuppressWarnings("unchecked")
+                    final List<Object> result = (List<Object>) rawType.newInstance();
+                    for (Object element : elements) result.add(element);
+                    return result;
+                } catch (Exception e) {
+                    throw new IllegalArgumentException("Failed to create list implementation " + rawType, e);
+                }
             }
         }
 

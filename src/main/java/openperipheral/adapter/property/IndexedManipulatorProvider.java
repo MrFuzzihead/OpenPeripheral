@@ -17,7 +17,7 @@ import openperipheral.converter.StructHandlerProvider.IStructHandler;
 public class IndexedManipulatorProvider {
 
     public static int getIndex(Object index) {
-        Preconditions.checkArgument(index instanceof Index, "Invalid index type, got %s", index.getClass());
+        Preconditions.checkArgument(index instanceof Index, "Invalid index type, got %s", index);
         return ((Index) index).value;
     }
 
@@ -184,12 +184,12 @@ public class IndexedManipulatorProvider {
         @Override
         public void set(Object owner, IIndexedCustomProperty<Object, Object> target, Field field, Object index,
             Object value) {
-            target.set(target, field, index, value);
+            target.set(owner, field, index, value);
         }
 
         @Override
         public Object get(Object owner, IIndexedCustomProperty<Object, Object> target, Field field, Object index) {
-            return target.get(target, field, index);
+            return target.get(owner, field, index);
         }
     };
 

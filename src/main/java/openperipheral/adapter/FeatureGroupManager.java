@@ -4,9 +4,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import cpw.mods.fml.common.discovery.ASMDataTable;
@@ -20,7 +19,8 @@ public class FeatureGroupManager implements IFeatureGroupManager {
 
     private static class FeatureGroupProperties {
 
-        private final Set<String> blacklistedArchitectures = Sets.newHashSet();
+        private final Set<String> blacklistedArchitectures = Collections
+            .newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 
         public void disable(String architecture) {
             blacklistedArchitectures.add(architecture);
@@ -41,13 +41,14 @@ public class FeatureGroupManager implements IFeatureGroupManager {
         }
     }
 
-    private final Map<String, FeatureGroupProperties> featureGroups = Maps.newHashMap();
+    private final Map<String, FeatureGroupProperties> featureGroups = new ConcurrentHashMap<String, FeatureGroupProperties>();
 
     private FeatureGroupProperties getOrCreate(String featureGroup) {
         FeatureGroupProperties result = featureGroups.get(featureGroup);
         if (result == null) {
-            result = new FeatureGroupProperties();
-            featureGroups.put(featureGroup, result);
+            final FeatureGroupProperties created = new FeatureGroupProperties();
+            result = featureGroups.putIfAbsent(featureGroup, created);
+            if (result == null) result = created;
         }
 
         return result;
@@ -105,11 +106,14 @@ public class FeatureGroupManager implements IFeatureGroupManager {
         if (blacklist == null) return;
 
         for (String entry : blacklist) {
-            final String[] split = entry.split(":");
-            Preconditions.checkArgument(split.length == 2, "Malformed config entry: %s", entry);
+            final int separator = entry.indexOf(':');
+            if (separator <= 0 || separator == entry.length() - 1) {
+                openmods.Log.warn("Malformed feature group config entry, skipping: '%s'", entry);
+                continue;
+            }
 
-            final String featureGroup = split[0];
-            final String architecture = split[1];
+            final String featureGroup = entry.substring(0, separator);
+            final String architecture = entry.substring(separator + 1);
 
             disable(featureGroup, architecture);
         }

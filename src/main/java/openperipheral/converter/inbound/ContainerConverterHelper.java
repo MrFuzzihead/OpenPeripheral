@@ -41,7 +41,8 @@ public abstract class ContainerConverterHelper<R> {
 
         final Type valueType = componentType.getType();
 
-        final boolean isNullable = componentType.isPrimitive();
+        // Primitive components cannot hold null; reference components can.
+        final boolean isNullable = !componentType.isPrimitive();
 
         final int size = indexMax + 1;
         R result = createNewContainer(componentType, size);

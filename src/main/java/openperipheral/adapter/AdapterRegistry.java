@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 
 import openmods.Log;
@@ -20,7 +20,7 @@ public class AdapterRegistry {
 
     public static final AdapterRegistry OBJECT_ADAPTERS = new AdapterRegistry();
 
-    private final Multimap<Class<?>, AdapterWrapper> externalAdapters = HashMultimap.create();
+    private final Multimap<Class<?>, AdapterWrapper> externalAdapters = LinkedHashMultimap.create();
 
     public Map<Class<?>, Collection<AdapterWrapper>> listExternalAdapters() {
         return Collections.unmodifiableMap(externalAdapters.asMap());

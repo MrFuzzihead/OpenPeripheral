@@ -43,6 +43,10 @@ public class StructHandlerProvider {
         public InvalidStructureException(String message) {
             super(message);
         }
+
+        public InvalidStructureException(String message, Throwable cause) {
+            super(message, cause);
+        }
     }
 
     public static final StructHandlerProvider instance = new StructHandlerProvider();
@@ -103,6 +107,12 @@ public class StructHandlerProvider {
             this.name = name;
             this.index = index;
             this.isOptional = isOptional;
+
+            try {
+                field.setAccessible(true);
+            } catch (SecurityException e) {
+                throw new InvalidStructureException("Can't access field " + field, e);
+            }
         }
 
         @Override
@@ -163,7 +173,13 @@ public class StructHandlerProvider {
             ImmutableSet.Builder<IFieldHandler> optionalFields = ImmutableSet.builder();
 
             final Class<?> cls = this.ctor.getDeclaringClass();
-            final List<Field> sortedFields = Lists.newArrayList(cls.getFields());
+            final List<Field> sortedFields = Lists.newArrayList();
+            for (Class<?> current = cls; current != null
+                && current != Object.class; current = current.getSuperclass()) {
+                for (Field field : current.getDeclaredFields()) {
+                    if (field.isAnnotationPresent(StructField.class)) sortedFields.add(field);
+                }
+            }
             Collections.sort(sortedFields, FIELD_NAME_ORDERING);
 
             final SortedMap<Integer, IFieldHandler> indexedFields = Maps.newTreeMap();
@@ -241,7 +257,7 @@ public class StructHandlerProvider {
                     final int index = ((Number) key).intValue() - indexOffset;
 
                     Preconditions.checkArgument(
-                        index < indexedFields.size(),
+                        index >= 0 && index < indexedFields.size(),
                         "Index %s is outside of allowed range for structure",
                         index);
                     final IFieldHandler f = indexedFields.get(index);
@@ -350,11 +366,11 @@ public class StructHandlerProvider {
         }
     };
 
-    public boolean isStruct(Class<?> cls) {
+    public synchronized boolean isStruct(Class<?> cls) {
         return checkedClasses.getOrCreate(cls);
     }
 
-    public IStructHandler getHandler(Class<?> cls) {
+    public synchronized IStructHandler getHandler(Class<?> cls) {
         return handlers.getOrCreate(cls);
     }
 

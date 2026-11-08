@@ -9,6 +9,7 @@ import java.util.Set;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
 
 import openperipheral.Config;
@@ -30,7 +31,8 @@ public class ClassMethodsComposer {
         Set<Class<?>> allSuperInterfaces = Sets.newHashSet();
         for (Class<?> c : classHierarchy) allSuperInterfaces.addAll(listSuperInterfaces(c));
 
-        for (Class<?> c : allSuperInterfaces) {
+        for (Class<?> c : Ordering.usingToString()
+            .sortedCopy(allSuperInterfaces)) {
             builder.addExternalAdapters(cls, c);
             builder.addInlineAdapter(cls, c);
         }

@@ -4,10 +4,10 @@ import openperipheral.api.adapter.IScriptType;
 
 public class SingleType implements IScriptType {
 
-    public static IScriptType VOID = new SingleType("()");
-    public static IScriptType WILDCHAR = new SingleType("*");
-    public static IScriptType UNKNOWN = new SingleType("?");
-    public static IScriptType TAIL = new SingleType("...");
+    public static final IScriptType VOID = new SingleType("()");
+    public static final IScriptType WILDCHAR = new SingleType("*");
+    public static final IScriptType UNKNOWN = new SingleType("?");
+    public static final IScriptType TAIL = new SingleType("...");
 
     private final String type;
 

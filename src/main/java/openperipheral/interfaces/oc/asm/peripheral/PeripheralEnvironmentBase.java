@@ -54,7 +54,10 @@ public class PeripheralEnvironmentBase extends ManagedEnvironment implements Nam
     protected void onConnect(IAttachable target, Node node) {
         final Environment host = node.host();
         if (host instanceof Context) {
-            IArchitectureAccess access = accessCache.getOrCreate((Context) host);
+            final IArchitectureAccess access;
+            synchronized (accessCache) {
+                access = accessCache.getOrCreate((Context) host);
+            }
             target.addComputer(access);
         }
     }
@@ -62,7 +65,10 @@ public class PeripheralEnvironmentBase extends ManagedEnvironment implements Nam
     protected void onDisconnect(IAttachable target, Node node) {
         final Environment host = node.host();
         if (host instanceof Context) {
-            IArchitectureAccess access = accessCache.remove((Context) host);
+            final IArchitectureAccess access;
+            synchronized (accessCache) {
+                access = accessCache.remove((Context) host);
+            }
             if (access != null) target.removeComputer(access);
         }
     }
